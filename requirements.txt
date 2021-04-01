@@ -1,0 +1,4 @@
+supervisely==6.1.59
+lxml==4.6.3
+numpy==1.19.4
+Pillow==8.0.1

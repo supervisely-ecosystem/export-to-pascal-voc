@@ -3,18 +3,8 @@ import numpy as np
 import lxml.etree as ET
 import supervisely_lib as sly
 from PIL import Image
-from dicttoxml import dicttoxml
 from supervisely_lib.io.fs import get_file_name
 from supervisely_lib.imaging.color import generate_rgb
-
-# Difficult images
-# Images which are overly difficult to segment to the required accuracy can be left unlabelled e.g. a nest of bicycles.
-# mb if > 5 or more objects
-
-# Truncation
-# If more than 15-20% of the object lies outside the bounding box mark as Truncated
-# The flag indicates that the bounding box does not cover the total extent of the object
-
 
 my_app = sly.AppService()
 
@@ -102,6 +92,7 @@ def from_ann_to_obj_class_mask(ann, palette, pascal_contour):
 
     return pascal_mask
 
+
 def ann_to_xml(project_info, image_info, result_ann_dir, ann):
     xml_root = ET.Element("annotation")
 
@@ -141,6 +132,7 @@ def ann_to_xml(project_info, image_info, result_ann_dir, ann):
     ann_path = (os.path.join(result_ann_dir, img_name))
     ET.indent(tree, space="    ")
     tree.write(ann_path, pretty_print=True)
+
 
 @my_app.callback("from_sly_to_pascal")
 @sly.timeit
@@ -184,11 +176,9 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
             for image_info, ann_info in zip(batch, ann_infos):
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
-
                 ann_to_xml(project_info, image_info, result_ann_dir, ann)
 
                 img_ext = sly.fs.get_file_ext(image_info.name)
-
                 #if img_ext not in VALID_IMG_EXT:
 
                 img_title = image_info.name.split('.')[0]

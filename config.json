@@ -5,7 +5,7 @@
     "export"
   ],
   "description": "Convert a Supervisely JSON format to Pascal VOC format.",
-  "docker_image": "supervisely/base-py-sdk:6",
+  "docker_image": "supervisely/base-py-sdk:6.1.59",
   "main_script": "src/export-pascal-voc.py",
   "task_location": "workspace_tasks",
   "isolate": true,

@@ -12,9 +12,7 @@
   "icon": "https://img.icons8.com/color/96/000000/console.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
-    "target": [
-      "images_project"
-    ],
-    "context_category": "Export to Pascal VOC"
+    "target": ["images_project"],
+    "context_root": "Download as"
   }
 }

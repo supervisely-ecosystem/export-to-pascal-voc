@@ -12,8 +12,8 @@ TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
 
-ARCHIVE_NAME = '_pascal_voc.tar.gz'
-RESULT_DIR_NAME = '_pascal_voc'
+ARCHIVE_NAME_ENDING = '_pascal_voc.tar.gz'
+RESULT_DIR_NAME_ENDING = '_pascal_voc'
 RESULT_SUBDIR_NAME = 'VOCdevkit/VOC'
 
 images_dir_name = 'JPEGImages'
@@ -194,8 +194,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     palette, name_to_index = get_palette_from_meta(meta)
     app_logger.info("Create palette")
 
-    full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME
-    full_result_dir_name = str(project_info.id) + '_' + project_info.name + RESULT_DIR_NAME
+    full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME_ENDING
+    full_result_dir_name = str(project_info.id) + '_' + project_info.name + RESULT_DIR_NAME_ENDING
     RESULT_ARCHIVE = os.path.join(my_app.data_dir, full_archive_name)
 
     RESULT_DIR = os.path.join(my_app.data_dir, full_result_dir_name)
@@ -306,7 +306,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     file_info = api.file.upload(TEAM_ID, RESULT_ARCHIVE, remote_archive_path,
                                 lambda m: _print_progress(m, upload_progress))
     app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.full_storage_url))
-    api.task.set_output_archive(task_id, file_info.id, ARCHIVE_NAME, file_url=file_info.full_storage_url)
+    api.task.set_output_archive(task_id, file_info.id, full_archive_name, file_url=file_info.full_storage_url)
 
     my_app.stop()
 

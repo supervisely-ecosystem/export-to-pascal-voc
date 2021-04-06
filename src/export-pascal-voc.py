@@ -22,10 +22,11 @@ ann_class_dir_name = 'SegmentationClass'
 ann_obj_dir_name = 'SegmentationObject'
 
 trainval_sets_dir_name = 'ImageSets'
-trainval_sets_action_name = 'Action'
-trainval_sets_layout_name = 'Layout'
 trainval_sets_main_name = 'Main'
 trainval_sets_segm_name = 'Segmentation'
+
+#trainval_sets_action_name = 'Action'
+#trainval_sets_layout_name = 'Layout'
 
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
@@ -145,7 +146,6 @@ def find_first_tag(img_tags, split_tags):
     for tag in split_tags:
         if img_tags.has_key(tag):
             return img_tags.get(tag)
-
     return None
 
 
@@ -165,7 +165,6 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
         {'suffix': 'train', 'imgs': train_imgs},
         {'suffix': 'val', 'imgs': val_imgs},
     ]
-
     for obj_cls in meta_json.obj_classes:
         for o in write_objs:
             with open(os.path.join(result_imgsets_main_subdir, f'{obj_cls.name}_{o["suffix"]}.txt'), 'w') as f:
@@ -206,18 +205,18 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     result_class_dir_name = os.path.join(RESULT_SUBDIR, ann_class_dir_name)
     result_obj_dir = os.path.join(RESULT_SUBDIR, ann_obj_dir_name)
     result_imgsets_dir = os.path.join(RESULT_SUBDIR, trainval_sets_dir_name)
-    result_imgsets_action_subdir = os.path.join(result_imgsets_dir, trainval_sets_action_name)
-    result_imgsets_layout_subdir = os.path.join(result_imgsets_dir, trainval_sets_layout_name)
-    result_imgsets_main_subdir = os.path.join(result_imgsets_dir, trainval_sets_layout_name)
-    result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, trainval_sets_layout_name)
+
+    #result_imgsets_action_subdir = os.path.join(result_imgsets_dir, trainval_sets_action_name)
+    #result_imgsets_layout_subdir = os.path.join(result_imgsets_dir, trainval_sets_layout_name)
 
     sly.fs.mkdir(result_ann_dir)
     sly.fs.mkdir(result_imgsets_dir)
-    sly.fs.mkdir(result_imgsets_action_subdir)
-    sly.fs.mkdir(result_imgsets_layout_subdir)
     sly.fs.mkdir(result_images_dir)
     sly.fs.mkdir(result_class_dir_name)
     sly.fs.mkdir(result_obj_dir)
+
+    #sly.fs.mkdir(result_imgsets_action_subdir)
+    #sly.fs.mkdir(result_imgsets_layout_subdir)
 
     app_logger.info("Make Pascal format dirs")
 
@@ -232,15 +231,12 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                                 app_logger)
 
         images = api.image.get_list(dataset.id)
-
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
             image_paths = [os.path.join(result_images_dir, image_info.name) for image_info in batch]
 
             api.image.download_paths(dataset.id, image_ids, image_paths)
-
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
-
             for image_info, ann_info in zip(batch, ann_infos):
                 img_title, img_ext = os.path.splitext(image_info.name)
                 cur_img_filename = image_info.name
@@ -248,7 +244,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 cur_img_stats = {'classes': set(), 'dataset': None, 'name': img_title}
                 images_stats.append(cur_img_stats)
 
-                # convert img to jpeg
                 if img_ext not in VALID_IMG_EXT:
                     image_path = os.path.join(result_images_dir, cur_img_filename)
                     cur_img_filename = img_title + ".jpg"
@@ -262,7 +257,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
 
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)
-
                 if tag is None:
                     total_untagged_images_cnt += 1
                     cur_train_weight = total_train_images_cnt / total_untagged_images_cnt

@@ -194,8 +194,11 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     palette, name_to_index = get_palette_from_meta(meta)
     app_logger.info("Create palette")
 
-    RESULT_ARCHIVE = os.path.join(my_app.data_dir, str(PROJECT_ID) + ARCHIVE_NAME)
-    RESULT_DIR = os.path.join(my_app.data_dir, str(PROJECT_ID) + RESULT_DIR_NAME)
+    full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME
+    full_result_dir_name = str(project_info.id) + '_' + project_info.name + RESULT_DIR_NAME
+    RESULT_ARCHIVE = os.path.join(my_app.data_dir, full_archive_name)
+
+    RESULT_DIR = os.path.join(my_app.data_dir, full_result_dir_name)
     RESULT_SUBDIR = os.path.join(RESULT_DIR, RESULT_SUBDIR_NAME)
 
     result_ann_dir = os.path.join(RESULT_SUBDIR, ann_dir_name)
@@ -290,11 +293,11 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     app_logger.info("Result directory is archived")
 
     upload_progress = []
-    remote_archive_path = "/pascal_format/{}/{}".format(task_id, ARCHIVE_NAME)
+    remote_archive_path = "/pascal_format/{}/{}".format(task_id, full_archive_name)
 
     def _print_progress(monitor, upload_progress):
         if len(upload_progress) == 0:
-            upload_progress.append(sly.Progress(message="Upload {!r}".format(ARCHIVE_NAME),
+            upload_progress.append(sly.Progress(message="Upload {!r}".format(full_archive_name),
                                                 total_cnt=monitor.len,
                                                 ext_logger=app_logger,
                                                 is_size=True))

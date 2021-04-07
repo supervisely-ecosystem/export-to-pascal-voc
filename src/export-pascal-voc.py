@@ -25,9 +25,6 @@ trainval_sets_dir_name = 'ImageSets'
 trainval_sets_main_name = 'Main'
 trainval_sets_segm_name = 'Segmentation'
 
-#trainval_sets_action_name = 'Action'
-#trainval_sets_layout_name = 'Layout'
-
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
 
@@ -195,8 +192,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME_ENDING
     full_result_dir_name = str(project_info.id) + '_' + project_info.name + RESULT_DIR_NAME_ENDING
-    RESULT_ARCHIVE = os.path.join(my_app.data_dir, full_archive_name)
 
+    RESULT_ARCHIVE = os.path.join(my_app.data_dir, full_archive_name)
     RESULT_DIR = os.path.join(my_app.data_dir, full_result_dir_name)
     RESULT_SUBDIR = os.path.join(RESULT_DIR, RESULT_SUBDIR_NAME)
 
@@ -206,17 +203,11 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     result_obj_dir = os.path.join(RESULT_SUBDIR, ann_obj_dir_name)
     result_imgsets_dir = os.path.join(RESULT_SUBDIR, trainval_sets_dir_name)
 
-    #result_imgsets_action_subdir = os.path.join(result_imgsets_dir, trainval_sets_action_name)
-    #result_imgsets_layout_subdir = os.path.join(result_imgsets_dir, trainval_sets_layout_name)
-
     sly.fs.mkdir(result_ann_dir)
     sly.fs.mkdir(result_imgsets_dir)
     sly.fs.mkdir(result_images_dir)
     sly.fs.mkdir(result_class_dir_name)
     sly.fs.mkdir(result_obj_dir)
-
-    #sly.fs.mkdir(result_imgsets_action_subdir)
-    #sly.fs.mkdir(result_imgsets_layout_subdir)
 
     app_logger.info("Make Pascal format dirs")
 

@@ -66,7 +66,7 @@ def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
     for label in ann.labels:
         label.geometry.draw(mask, name_to_index[label.obj_class.name])
         if pascal_contour != 0:
-            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], pascal_contour)
+            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], 4)
 
     mask = mask[:, :, 0]
     pascal_mask = Image.fromarray(mask).convert('P')

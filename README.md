@@ -67,7 +67,7 @@ Each line of the file contains a single image identifier and ground truth label,
 2009_000052 1
 ```
   
-The `Export to Pascal VOC` application use only 2 of 3 ground truth labels:
+The `Export to Pascal VOC` application use 2 ground truth labels:
 
 * -1: Negative: The image contains no objects of the class of interest. A classi-
 fier should give a ‘negative’ output.

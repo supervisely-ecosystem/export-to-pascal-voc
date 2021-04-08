@@ -78,6 +78,46 @@ A classifier should give a ‘positive’ output.
 The `VOC/ImageSets/Segmentation/` directory contains text files specifying lists of images for the segmentation task.
 The files train.txt, val.txt and trainval.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
 
+**Image Processing**
+
+In PASCAL VOC 12 there are 21 classes - 20 objects and 1 background. The classes are coded as pixel values. For example, the pixels belonging to background have values 0. The rest of the classes are coded from 1 to 20 in alphabetical order. 
+For example, in the original Pascal VOC dataset class aeroplane has pixel values equal to 1. In each image you may have multiple classes. 
+To get the class labels, we read the corresponding groundtruth image using PIL and find the different pixel values present in the image. The pixel values will give you the object classes present in the image.
+
+We read Supervisely project meta and match palette colors with name_to_index dictionary.
+
+```python
+def get_palette_from_meta(meta):
+    if len(meta.obj_classes) == 0:
+        raise ValueError('There are no classes in you project')
+    palette = [[0, 0, 0]]
+    name_to_index = {}
+    for idx, obj_class in enumerate(meta.obj_classes):
+        palette.append(obj_class.color)
+        name_to_index[obj_class.name] = idx + 1
+    palette.append(pascal_contour_color)
+    name_to_index[pascal_contour_name] = len(name_to_index) + 1
+    
+    return palette, name_to_index
+```    
+
+And then we use (PIL Image.convert)[https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert] to convert`RGB` images to `P` mode, this method translates pixels through the palette and then we draw masks for each label for Class and Object Segmentantion
+
+```python
+def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
+    mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
+    for label in ann.labels:
+        label.geometry.draw(mask, name_to_index[label.obj_class.name])
+        if pascal_contour != 0:
+            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], 4)
+
+    mask = mask[:, :, 0]
+    pascal_mask = Image.fromarray(mask).convert('P')
+    pascal_mask.putpalette(np.array(palette, dtype=np.uint8))
+
+    return pascal_mask
+``` 
+
 **Action and Layout Classification Image Sets are not supported by export application.**
 
 ## How To Run 

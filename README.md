@@ -25,7 +25,7 @@ Transform images project in Supervisely ([link to format](https://docs.supervise
 ## Preparation
 There are no special requirements for Supervisely project, classes can have any shapes. It means that any labeled object can be converted.
 
-Pascal VOC format stores all data in separate folders. Image annotations are stored in `xml` files. Segmentantion class and object masks are placed into SegmentationClass and SegmentationObject folders respectively.
+Pascal VOC format stores all data in separate folders. Image bounding boxes and additional information are stored in `xml` files. Segmentantion class and object masks are placed into `SegmentationClass` and `SegmentationObject` folders respectively. **All image Tags, except `train` and `val` will be skipped**.
 
 #### Pascal VOC Project directory has the following structure:
 * Voc
@@ -41,8 +41,7 @@ Pascal VOC format stores all data in separate folders. Image annotations are sto
 
 
 
-In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 50% for training and 50% for validation. The distributions of images and objects by class are approximately equal across the training and validation sets.
-You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
+In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 80% for training and 20% for validation. You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
 
 
 #### Pascal VOC format has the following ImageSets:
@@ -50,7 +49,7 @@ You can also assign corresponding tags (`train` or `val`) to images manually, or
 **Classification/Detection Image Sets**
 
 The `VOC/ImageSets/Main/` directory contains text files specifying lists of images for the main classification/detection tasks.
-The files train.txt, val.txt, trainval.txt and test.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
+The files train.txt, val.txt, trainval.txt and test.txt list the image identifiers for the corresponding image sets (training, validation, training+validation, test). Each line of the file contains a single image identifier.
 
 * train: Training data.
 * val: Validation data.
@@ -85,7 +84,7 @@ The files train.txt, val.txt and trainval.txt list the image identifiers for the
 
 In PASCAL VOC 12 there are 21 classes - 20 objects and 1 background. The classes are coded as pixel values. For example, the pixels belonging to background have values 0. The rest of the classes are coded from 1 to 20 in alphabetical order. 
 For example, in the original Pascal VOC dataset class aeroplane has pixel values equal to 1. In each image you may have multiple classes. 
-To get the class labels, we read the corresponding groundtruth image using PIL and find the different pixel values present in the image. The pixel values will give you the object classes present in the image.
+The label image is a single-channel 8-bit paletted image. In an 8-bit paletted image every pixel value is an index into an array of 256 RGB values. The color palette in PASCAL VOC is chosen such that adjacent values map to very different colors in order to make classes more easily distinguishable during visual inspection.To get the class labels, we read the corresponding groundtruth image using PIL and find the different pixel values present in the image. The pixel values will give you the object classes present in the image.
 
 We read Supervisely project meta and match palette colors with name_to_index dictionary.
 
@@ -102,6 +101,10 @@ def get_palette_from_meta(meta):
     name_to_index[pascal_contour_name] = len(name_to_index) + 1
     
     return palette, name_to_index
+    
+meta_json = api.project.get_meta(PROJECT_ID)
+meta = sly.ProjectMeta.from_json(meta_json)
+palette, name_to_index = get_palette_from_meta(meta)
 ```    
 
 And then we use [PIL Image.convert](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert) to convert`RGB` images to `P` mode, this method translates pixels through the palette and significantly decrease annotation size. And then we draw masks for each label for Class and Object Segmentantion.

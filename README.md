@@ -47,18 +47,18 @@ You can also assign corresponding tags (`train` or `val`) to images manually, or
 
 ##### Classification/Detection Image Sets
 
-The VOC/ImageSets/Main/ directory contains text files specifying lists of images for the main classification/detection tasks.
+The `VOC/ImageSets/Main/` directory contains text files specifying lists of images for the main classification/detection tasks.
 The files train.txt, val.txt, trainval.txt and test.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
 
 * train: Training data.
 * val: Validation data.
 * trainval: The union of train and val.
 
-The file VOC/ImageSets/Main/<class>_<imgset>.txt contains image identifiers and ground truth for a particular class and image set.
+The file `VOC/ImageSets/Main/<class>_<imgset>.txt` contains image identifiers and ground truth for a particular class and image set.
 For example the file car_train.txt applies to the ‘car’ class and train image set.
 Each line of the file contains a single image identifier and ground truth label, separated by a space, for example:
 
-```
+```txt
 2009_000040 -1
 2009_000042 -1
 2009_000052 1
@@ -71,8 +71,8 @@ fier should give a ‘negative’ output.
 * 1: Positive: The image contains at least one object of the class of interest.
 A classifier should give a ‘positive’ output.
 
-###### Segmentation Image Sets
-The VOC/ImageSets/Segmentation/ directory contains text files specifying lists of images for the segmentation task.
+##### Segmentation Image Sets
+The `VOC/ImageSets/Segmentation/` directory contains text files specifying lists of images for the segmentation task.
 The files train.txt, val.txt and trainval.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
 
 ##### Action and Layout Classification Image Sets are not supported by export application.

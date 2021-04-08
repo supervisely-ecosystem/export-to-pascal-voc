@@ -27,7 +27,7 @@ There are no special requirements for Supervisely project, classes can have any 
 
 Pascal VOC format stores all data in separate folders. Image annotations are stored in `xml` files. Segmentantion class and object masks are placed into SegmentationClass and SegmentationObject folders respectively.
 
-##### Pascal VOC Project directory has the following structure:
+#### Pascal VOC Project directory has the following structure:
 * Voc
   * Annotations
   * ImageSets
@@ -45,9 +45,9 @@ In addition, Pascal VOC format implies the presence of train/val. If images does
 You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
 
 
-##### Pascal VOC format has the following ImageSets:
+#### Pascal VOC format has the following ImageSets:
 
-##### Classification/Detection Image Sets
+**Classification/Detection Image Sets**
 
 The `VOC/ImageSets/Main/` directory contains text files specifying lists of images for the main classification/detection tasks.
 The files train.txt, val.txt, trainval.txt and test.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
@@ -73,36 +73,26 @@ fier should give a ‘negative’ output.
 * 1: Positive: The image contains at least one object of the class of interest.
 A classifier should give a ‘positive’ output.
 
-##### Segmentation Image Sets
+**Segmentation Image Sets**
 The `VOC/ImageSets/Segmentation/` directory contains text files specifying lists of images for the segmentation task.
 The files train.txt, val.txt and trainval.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
 
-##### Action and Layout Classification Image Sets are not supported by export application.
+**Action and Layout Classification Image Sets are not supported by export application.**
 
 ## How To Run 
 **Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/export-to-pascal-voc) if it is not there.
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export to Pascal VOC` 
 
-#TODO IMAGE
-<img src="https://i.imgur.com/u3Kggob.png" width="600px"/>
+<img src="https://i.imgur.com/0DqaKq1.png" width="600px"/>
 
 
 ## How to use
 
 App creates task in `workspace tasks` list. Once app is finished, you will see download link to resulting tar archive. 
 
-#TODO IMAGE
-<img src="https://i.imgur.com/kXnmshv.png"/>
+<img src="https://i.imgur.com/MTjig3H.png"/>
 
 Resulting archive is saved in : 
 
 `Current Team` -> `Files` -> `/pascal_voc_format/<task_id>/<project_id>_<project_name>_pascal_format.tar`. 
-
-For example, in our example file path is the following: 
-
-`/yolov5_format/1430/1047_lemons_annotated.tar`.
-
-Here is the structure example of downloaded Pascal VOC project that you will find in archive:
-
-<img src="https://i.imgur.com/e8Ff1Bo.png">

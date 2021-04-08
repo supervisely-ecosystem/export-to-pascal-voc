@@ -84,8 +84,7 @@ The files train.txt, val.txt and trainval.txt list the image identifiers for the
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export to Pascal VOC` 
 
-#TODO IMAGE
-<img src="https://i.imgur.com/u3Kggob.png" width="600px"/>
+<img src="https://i.imgur.com/0DqaKq1.png" width="600px"/>
 
 
 ## How to use

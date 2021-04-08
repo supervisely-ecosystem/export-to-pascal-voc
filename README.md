@@ -92,17 +92,8 @@ The files train.txt, val.txt and trainval.txt list the image identifiers for the
 
 App creates task in `workspace tasks` list. Once app is finished, you will see download link to resulting tar archive. 
 
-#TODO IMAGE
-<img src="https://i.imgur.com/kXnmshv.png"/>
+<img src="https://i.imgur.com/MTjig3H.png"/>
 
 Resulting archive is saved in : 
 
 `Current Team` -> `Files` -> `/pascal_voc_format/<task_id>/<project_id>_<project_name>_pascal_format.tar`. 
-
-For example, in our example file path is the following: 
-
-`/yolov5_format/1430/1047_lemons_annotated.tar`.
-
-Here is the structure example of downloaded Pascal VOC project that you will find in archive:
-
-<img src="https://i.imgur.com/e8Ff1Bo.png">

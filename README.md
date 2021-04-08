@@ -55,6 +55,7 @@ The files train.txt, val.txt, trainval.txt and test.txt list the image identifie
 * train: Training data.
 * val: Validation data.
 * trainval: The union of train and val.
+* test: Test data. **The test set is not provided by the export application.**
 
 The file `VOC/ImageSets/Main/<class>_<imgset>.txt` contains image identifiers and ground truth for a particular class and image set.
 For example the file car_train.txt applies to the ‘car’ class and train image set.
@@ -77,6 +78,8 @@ A classifier should give a ‘positive’ output.
 
 The `VOC/ImageSets/Segmentation/` directory contains text files specifying lists of images for the segmentation task.
 The files train.txt, val.txt and trainval.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
+
+**Action and Layout Classification Image Sets are not supported by export application.**
 
 **Image Processing**
 
@@ -117,8 +120,6 @@ def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
 
     return pascal_mask
 ``` 
-
-**Action and Layout Classification Image Sets are not supported by export application.**
 
 ## How To Run 
 **Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/export-to-pascal-voc) if it is not there.

@@ -1,5 +1,5 @@
 <div align="center" markdown>
-<img src="https://i.imgur.com/UeObs7R.png"/>
+<img src="https://i.imgur.com/6Oddf4b.png"/>
 
 # Export to Pascal VOC
 
@@ -38,6 +38,8 @@ Pascal VOC format stores all data in separate folders. Image annotations are sto
   * JPEGImages 
   * SegmentationClass
   * SegmentationObject
+
+
 
 In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 50% for training and 50% for validation. The distributions of images and objects by class are approximately equal across the training and validation sets.
 You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
@@ -78,12 +80,12 @@ The files train.txt, val.txt and trainval.txt list the image identifiers for the
 ##### Action and Layout Classification Image Sets are not supported by export application.
 
 ## How To Run 
-**Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/convert-supervisely-to-yolov5-format) if it is not there.
+**Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/export-to-pascal-voc) if it is not there.
 
-**Step 2**: Open context menu of project -> `Download as` -> `Export to Pascal VOC` 
+**Step 2**: Open context menu of project -> `Download via App` -> `Export to Pascal VOC` 
 
 #TODO IMAGE
-<img src="https://i.imgur.com/bOUC5WH.png" width="600px"/>
+<img src="https://i.imgur.com/u3Kggob.png" width="600px"/>
 
 
 ## How to use
@@ -95,26 +97,12 @@ App creates task in `workspace tasks` list. Once app is finished, you will see d
 
 Resulting archive is saved in : 
 
-`Current Team` -> `Files` -> `/yolov5_format/<task_id>/<project_id>_<project_name>.tar`. 
+`Current Team` -> `Files` -> `/pascal_voc_format/<task_id>/<project_id>_<project_name>_pascal_format.tar`. 
 
 For example, in our example file path is the following: 
 
 `/yolov5_format/1430/1047_lemons_annotated.tar`.
 
-<img src="https://i.imgur.com/hGrAyY0.png"/>
+Here is the structure example of downloaded Pascal VOC project that you will find in archive:
 
-If some images were not tagged with `train` or `val` tags, special warning is printed. You will see all warnings in task logs.
-
-<img src="https://i.imgur.com/O5tshZQ.png"/>
-
-
-Here is the example of `data_config.yaml` that you will find in archive:
-
-
-```yaml
-names: [kiwi, lemon]            # class names
-colors: [[255,1,1], [1,255,1]]  # class colors
-nc: 2                           # number of classes
-train: ../lemons/images/train   # path to train imgs
-val: ../lemons/images/val       # path to val imgs
-```
+<img src="https://i.imgur.com/e8Ff1Bo.png">

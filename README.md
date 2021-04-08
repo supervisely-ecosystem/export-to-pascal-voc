@@ -101,7 +101,7 @@ def get_palette_from_meta(meta):
     return palette, name_to_index
 ```    
 
-And then we use (PIL Image.convert)[https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert] to convert`RGB` images to `P` mode, this method translates pixels through the palette and then we draw masks for each label for Class and Object Segmentantion
+And then we use [PIL Image.convert](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert) to convert`RGB` images to `P` mode, this method translates pixels through the palette and then we draw masks for each label for Class and Object Segmentantion
 
 ```python
 def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):

@@ -107,7 +107,7 @@ def get_palette_from_meta(meta):
 And then we use [PIL Image.convert](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert) to convert`RGB` images to `P` mode, this method translates pixels through the palette and significantly decrease annotation size. And then we draw masks for each label for Class and Object Segmentantion.
 
 ```python
-# This example is used to draw only Class Segmentantion
+# This example is used to draw only Class Segmentantion Images
 def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:

@@ -9,7 +9,7 @@
   "main_script": "src/export-pascal-voc.py",
   "task_location": "workspace_tasks",
   "isolate": true,
-  "icon": "https://img.icons8.com/color/96/000000/console.png",
+  "icon": "https://i.imgur.com/zTseThz.png",
   "icon_background": "#FFFFFF",
   "context_menu": {
     "target": ["images_project"],

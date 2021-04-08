@@ -27,7 +27,7 @@ There are no special requirements for Supervisely project, classes can have any 
 
 Pascal VOC format stores all data in separate folders. Image annotations are stored in `xml` files. Segmentantion class and object masks are placed into SegmentationClass and SegmentationObject folders respectively.
 
-##### Pascal VOC Project directory has the following structure:
+#### Pascal VOC Project directory has the following structure:
 * Voc
   * Annotations
   * ImageSets
@@ -45,7 +45,7 @@ In addition, Pascal VOC format implies the presence of train/val. If images does
 You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
 
 
-##### Pascal VOC format has the following ImageSets:
+#### Pascal VOC format has the following ImageSets:
 
 ##### Classification/Detection Image Sets
 

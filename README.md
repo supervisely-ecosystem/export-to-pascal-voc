@@ -74,6 +74,7 @@ fier should give a ‘negative’ output.
 A classifier should give a ‘positive’ output.
 
 **Segmentation Image Sets**
+
 The `VOC/ImageSets/Segmentation/` directory contains text files specifying lists of images for the segmentation task.
 The files train.txt, val.txt and trainval.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
 

@@ -47,7 +47,7 @@ You can also assign corresponding tags (`train` or `val`) to images manually, or
 
 #### Pascal VOC format has the following ImageSets:
 
-##### Classification/Detection Image Sets
+**Classification/Detection Image Sets**
 
 The `VOC/ImageSets/Main/` directory contains text files specifying lists of images for the main classification/detection tasks.
 The files train.txt, val.txt, trainval.txt and test.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
@@ -73,11 +73,11 @@ fier should give a ‘negative’ output.
 * 1: Positive: The image contains at least one object of the class of interest.
 A classifier should give a ‘positive’ output.
 
-##### Segmentation Image Sets
+**Segmentation Image Sets**
 The `VOC/ImageSets/Segmentation/` directory contains text files specifying lists of images for the segmentation task.
 The files train.txt, val.txt and trainval.txt list the image identifiers for the corresponding image sets (training, validation, training+validation). Each line of the file contains a single image identifier.
 
-##### Action and Layout Classification Image Sets are not supported by export application.
+**Action and Layout Classification Image Sets are not supported by export application.**
 
 ## How To Run 
 **Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/export-to-pascal-voc) if it is not there.

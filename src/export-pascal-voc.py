@@ -254,9 +254,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
                 valid_labels = [label for label in ann.labels if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES]
 
-                if len(valid_labels) == 0:
-                    continue
-
                 ann = ann.clone(labels=valid_labels)
 
                 ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)

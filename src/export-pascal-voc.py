@@ -33,7 +33,7 @@ pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'
 
-train_split_coef = 0.8
+train_split_coef = 0.99
 
 TRAIN_TAG_NAME = 'train'
 VAL_TAG_NAME = 'val'
@@ -248,14 +248,18 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
 
-                valid_labels = [label for label in ann.labels if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES]
-                ann = ann.clone(labels=valid_labels)
-
-                ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
-
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)
                 if tag is not None:
                     cur_img_stats['dataset'] = tag.meta.name
+
+                valid_labels = [label for label in ann.labels if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES]
+
+                if len(valid_labels) == 0:
+                    continue
+
+                ann = ann.clone(labels=valid_labels)
+
+                ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
 
                 for label in ann.labels:
                     cur_img_stats['classes'].add(label.obj_class.name)

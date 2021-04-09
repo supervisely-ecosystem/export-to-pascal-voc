@@ -33,7 +33,7 @@ pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'
 
-train_split_coef = 0.99
+train_split_coef = 0.8
 
 TRAIN_TAG_NAME = 'train'
 VAL_TAG_NAME = 'val'

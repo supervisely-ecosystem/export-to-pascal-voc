@@ -28,18 +28,19 @@ trainval_sets_segm_name = 'Segmentation'
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
 
-pascal_contour = 1
+pascal_contour_thickness = 4
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'
 
-train_split_coef = 0.5
+train_split_coef = 0.8
 
 TRAIN_TAG_NAME = 'train'
 VAL_TAG_NAME = 'val'
 SPLIT_TAGS = set([TRAIN_TAG_NAME, VAL_TAG_NAME])
 
 VALID_IMG_EXT = set(['jpe', 'jpeg', 'jpg'])
+SUPPORTED_GEOMETRY_TYPES = set([sly.Bitmap, sly.Polygon])
 
 if train_split_coef > 1 or train_split_coef < 0:
     raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(train_split_coef))
@@ -63,7 +64,7 @@ def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
     for label in ann.labels:
         label.geometry.draw(mask, name_to_index[label.obj_class.name])
         if pascal_contour != 0:
-            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], 4)
+            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], pascal_contour)
 
     mask = mask[:, :, 0]
     pascal_mask = Image.fromarray(mask).convert('P')
@@ -86,7 +87,7 @@ def from_ann_to_obj_class_mask(ann, palette, pascal_contour):
 
         label.geometry.draw(mask, idx + 1)
         if pascal_contour != 0:
-            label.geometry.draw_contour(mask, len(exist_colors), 4)
+            label.geometry.draw_contour(mask, len(exist_colors), pascal_contour)
 
     if pascal_contour != 0:
         exist_colors.append(palette[-1])
@@ -151,8 +152,11 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_main_subdir)
 
+
+    res_files = ["trainval.txt", "train.txt", "val.txt"]
     for file in os.listdir(result_imgsets_segm_subdir):
-        copyfile(os.path.join(result_imgsets_segm_subdir, file), os.path.join(result_imgsets_main_subdir, file))
+        if file in res_files:
+           copyfile(os.path.join(result_imgsets_segm_subdir, file), os.path.join(result_imgsets_main_subdir, file))
 
     train_imgs = [i for i in images_stats if i['dataset'] == TRAIN_TAG_NAME]
     val_imgs = [i for i in images_stats if i['dataset'] == VAL_TAG_NAME]
@@ -168,6 +172,7 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
                 for img_stats in o['imgs']:
                     v = "1" if obj_cls.name in img_stats['classes'] else "-1"
                     f.write(f'{img_stats["name"]} {v}\n')
+
 
 def write_segm_set(images_stats, result_imgsets_dir):
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, trainval_sets_segm_name)
@@ -213,9 +218,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     images_stats = []
 
-    total_untagged_images_cnt = 0
-    total_train_images_cnt = 0
-
     datasets = api.dataset.get_list(PROJECT_ID)
     for dataset in datasets:
         progress = sly.Progress('Convert images and anns from dataset {}'.format(dataset.name), len(datasets),
@@ -245,31 +247,32 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     os.remove(image_path)
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
+
+                valid_labels = [label for label in ann.labels if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES]
+                ann = ann.clone(labels=valid_labels)
+
                 ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
 
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)
-                if tag is None:
-                    total_untagged_images_cnt += 1
-                    cur_train_weight = total_train_images_cnt / total_untagged_images_cnt
-
-                    if cur_train_weight < train_split_coef:
-                        total_train_images_cnt += 1
-                        cur_img_stats['dataset'] = TRAIN_TAG_NAME
-                    else:
-                        cur_img_stats['dataset'] = VAL_TAG_NAME
-                else:
+                if tag is not None:
                     cur_img_stats['dataset'] = tag.meta.name
 
                 for label in ann.labels:
                     cur_img_stats['classes'].add(label.obj_class.name)
 
-                pascal_mask = from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour)
+                pascal_mask = from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour_thickness)
                 pascal_mask.save(os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
 
-                pascal_obj_class_mask = from_ann_to_obj_class_mask(ann, palette, pascal_contour)
+                pascal_obj_class_mask = from_ann_to_obj_class_mask(ann, palette, pascal_contour_thickness)
                 pascal_obj_class_mask.save(os.path.join(result_obj_dir, img_title + pascal_ann_ext))
 
         progress.iter_done_report()
+
+    imgs_to_split = [i for i in images_stats if i['dataset'] is None]
+    train_len = int(len(imgs_to_split) * train_split_coef)
+
+    for img_stat in imgs_to_split[:train_len]: img_stat['dataset'] = TRAIN_TAG_NAME
+    for img_stat in imgs_to_split[train_len:]: img_stat['dataset'] = VAL_TAG_NAME
 
     write_segm_set(images_stats, result_imgsets_dir)
     write_main_set(images_stats, meta, result_imgsets_dir)

@@ -39,7 +39,7 @@ TRAIN_TAG_NAME = 'train'
 VAL_TAG_NAME = 'val'
 SPLIT_TAGS = set([TRAIN_TAG_NAME, VAL_TAG_NAME])
 
-VALID_IMG_EXT = set(['jpe', 'jpeg', 'jpg'])
+VALID_IMG_EXT = set(['.jpe', '.jpeg', '.jpg'])
 SUPPORTED_GEOMETRY_TYPES = set([sly.Bitmap, sly.Polygon])
 
 if train_split_coef > 1 or train_split_coef < 0:
@@ -244,7 +244,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     im = Image.open(image_path)
                     rgb_im = im.convert("RGB")
                     rgb_im.save(os.path.join(result_images_dir, cur_img_filename))
-                    os.remove(image_path)
+                    #os.remove(image_path)
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
 

@@ -19,7 +19,7 @@
 </div>
 
 ## Overview
-Transform images project in Supervisely ([link to format](https://docs.supervise.ly/data-organization/00_ann_format_navi)) to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.
+Converts [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) format project to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.
 
 
 ## Preparation

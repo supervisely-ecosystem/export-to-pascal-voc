@@ -19,7 +19,7 @@
 </div>
 
 ## Overview
-Transform images project in Supervisely ([link to format](https://docs.supervise.ly/data-organization/00_ann_format_navi)) to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.
+Converts [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) format project to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.
 
 
 ## Preparation
@@ -82,7 +82,8 @@ The files train.txt, val.txt and trainval.txt list the image identifiers for the
 
 **Image Processing**
 
-In PASCAL VOC 12 there are 21 classes - 20 objects and 1 background. The classes are coded as pixel values. For example, the pixels belonging to background have values 0. The rest of the classes are coded from 1 to 20 in alphabetical order. 
+In the original PASCAL VOC Dataset there are 21 classes - 20 objects and 1 background. The classes are coded as pixel values. For example, the pixels belonging to background have values 0. The rest of the classes are coded from 1 to 20 in alphabetical order. 
+
 For example, in the original Pascal VOC dataset class aeroplane has pixel values equal to 1. In each image you may have multiple classes. 
 The label image is a single-channel 8-bit paletted image. In an 8-bit paletted image every pixel value is an index into an array of 256 RGB values. The color palette in PASCAL VOC is chosen such that adjacent values map to very different colors in order to make classes more easily distinguishable during visual inspection.To get the class labels, we read the corresponding groundtruth image using PIL and find the different pixel values present in the image. The pixel values will give you the object classes present in the image.
 
@@ -110,7 +111,7 @@ palette, name_to_index = get_palette_from_meta(meta)
 And then we use [PIL Image.convert](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert) to convert`RGB` images to `P` mode, this method translates pixels through the palette and significantly decrease annotation size. And then we draw masks for each label for Class and Object Segmentantion.
 
 ```python
-# This example is used to draw only Class Segmentantion Images
+# This example is used to draw Class Segmentantion Images
 def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:

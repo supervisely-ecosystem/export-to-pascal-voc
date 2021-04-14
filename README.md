@@ -27,7 +27,7 @@ There are special requirements for Supervisely project, classes must have `Polyg
 
 Pascal VOC format stores all data in separate folders. Image classes bounding boxes and additional information are stored in `xml` files. Segmentantion class and object masks are placed into `SegmentationClass` and `SegmentationObject` folders respectively. **All image Tags, except `train` and `val` will be skipped**.
 
-#### Pascal VOC Project directory has the following structure:
+#### Exported Pascal VOC Project directory has the following structure:
 * Voc
   * Annotations
   * ImageSets
@@ -38,11 +38,18 @@ Pascal VOC format stores all data in separate folders. Image classes bounding bo
   * JPEGImages 
   * SegmentationClass
   * SegmentationObject
-
+  * classes_colors.txt
 
 
 In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 80% for training and 20% for validation. You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
 
+**`classes_colors.txt`** file contains information about instance mask colors associated with classes in Pascal VOC Project.
+```txt
+{
+    'kiwi': (255, 0, 0),
+    'lemon': (81, 198, 170)
+}
+```
 
 #### Pascal VOC format has the following ImageSets:
 

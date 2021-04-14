@@ -4,6 +4,7 @@ import lxml.etree as ET
 import supervisely_lib as sly
 from PIL import Image
 from shutil import copyfile
+from collections import OrderedDict
 from supervisely_lib.imaging.color import generate_rgb
 
 my_app = sly.AppService()
@@ -44,7 +45,6 @@ SUPPORTED_GEOMETRY_TYPES = set([sly.Bitmap, sly.Polygon])
 
 if train_split_coef > 1 or train_split_coef < 0:
     raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(train_split_coef))
-
 
 def get_palette_from_meta(meta):
     if len(meta.obj_classes) == 0:
@@ -218,6 +218,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     images_stats = []
 
+    custom_classes_colors = {}
+
     datasets = api.dataset.get_list(PROJECT_ID)
     for dataset in datasets:
         progress = sly.Progress('Convert images and anns from dataset {}'.format(dataset.name), len(datasets),
@@ -260,6 +262,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
                 for label in ann.labels:
                     cur_img_stats['classes'].add(label.obj_class.name)
+                    custom_classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
 
                 pascal_mask = from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour_thickness)
                 pascal_mask.save(os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
@@ -268,6 +271,17 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 pascal_obj_class_mask.save(os.path.join(result_obj_dir, img_title + pascal_ann_ext))
 
         progress.iter_done_report()
+
+    custom_classes_colors = OrderedDict((sorted(custom_classes_colors.items(), key=lambda t: t[0])))
+
+    with open(os.path.join(RESULT_SUBDIR, "classes_colors.txt"), "w") as cc:
+         cc.write("{\n")
+         for k in custom_classes_colors.keys():
+             if k != list(custom_classes_colors.keys())[-1]:
+                cc.write('    ' + f"'{k}': {custom_classes_colors[k]},\n")
+             else:
+                cc.write('    ' + f"'{k}': {custom_classes_colors[k]}\n")
+         cc.write("}")
 
     imgs_to_split = [i for i in images_stats if i['dataset'] is None]
     train_len = int(len(imgs_to_split) * train_split_coef)

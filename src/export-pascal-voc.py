@@ -217,7 +217,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     app_logger.info("Make Pascal format dirs")
 
     images_stats = []
-
     custom_classes_colors = {}
 
     datasets = api.dataset.get_list(PROJECT_ID)
@@ -246,7 +245,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     im = Image.open(image_path)
                     rgb_im = im.convert("RGB")
                     rgb_im.save(os.path.join(result_images_dir, cur_img_filename))
-                    #os.remove(image_path)
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
 
@@ -257,9 +255,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 valid_labels = [label for label in ann.labels if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES]
 
                 ann = ann.clone(labels=valid_labels)
-
                 ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
-
                 for label in ann.labels:
                     cur_img_stats['classes'].add(label.obj_class.name)
                     custom_classes_colors[label.obj_class.name] = tuple(label.obj_class.color)

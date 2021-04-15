@@ -29,7 +29,7 @@ trainval_sets_segm_name = 'Segmentation'
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
 
-pascal_contour_thickness = 4
+pascal_contour_thickness = 0
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'
@@ -46,6 +46,7 @@ SUPPORTED_GEOMETRY_TYPES = set([sly.Bitmap, sly.Polygon])
 if train_split_coef > 1 or train_split_coef < 0:
     raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(train_split_coef))
 
+
 def get_palette_from_meta(meta):
     if len(meta.obj_classes) == 0:
         raise ValueError('There are no classes in you project')
@@ -59,12 +60,10 @@ def get_palette_from_meta(meta):
     return palette, name_to_index
 
 
-def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
+def from_ann_to_pascal_mask(ann, palette, name_to_index):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
         label.geometry.draw(mask, name_to_index[label.obj_class.name])
-        if pascal_contour != 0:
-            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], pascal_contour)
 
     mask = mask[:, :, 0]
     pascal_mask = Image.fromarray(mask).convert('P')
@@ -73,7 +72,7 @@ def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
     return pascal_mask
 
 
-def from_ann_to_obj_class_mask(ann, palette, pascal_contour):
+def from_ann_to_obj_class_mask(ann, palette, name_to_index):
     exist_colors = palette[: -1]
     need_colors = len(ann.labels) - len(exist_colors) + 1
     for _ in range(need_colors):
@@ -83,14 +82,11 @@ def from_ann_to_obj_class_mask(ann, palette, pascal_contour):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for idx, label in enumerate(ann.labels):
         if label.obj_class.name == "neutral":
-            continue
+            label.geometry.draw(mask, name_to_index["pascal_contour"])
+            exist_colors.append(palette[-1])
+        else:
+            label.geometry.draw(mask, idx + 1)
 
-        label.geometry.draw(mask, idx + 1)
-        if pascal_contour != 0:
-            label.geometry.draw_contour(mask, len(exist_colors), pascal_contour)
-
-    if pascal_contour != 0:
-        exist_colors.append(palette[-1])
 
     mask = mask[:, :, 0]
     pascal_mask = Image.fromarray(mask).convert('P')
@@ -260,10 +256,10 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     cur_img_stats['classes'].add(label.obj_class.name)
                     custom_classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
 
-                pascal_mask = from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour_thickness)
+                pascal_mask = from_ann_to_pascal_mask(ann, palette, name_to_index)
                 pascal_mask.save(os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
 
-                pascal_obj_class_mask = from_ann_to_obj_class_mask(ann, palette, pascal_contour_thickness)
+                pascal_obj_class_mask = from_ann_to_obj_class_mask(ann, palette, name_to_index)
                 pascal_obj_class_mask.save(os.path.join(result_obj_dir, img_title + pascal_ann_ext))
 
         progress.iter_done_report()

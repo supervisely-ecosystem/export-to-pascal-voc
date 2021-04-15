@@ -38,12 +38,12 @@ Pascal VOC format stores all data in separate folders. Image classes bounding bo
   * JPEGImages 
   * SegmentationClass
   * SegmentationObject
-  * classes_colors.txt
+  * classes_colors.txt (not original Pascal VOC format file)
 
 
 In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 80% for training and 20% for validation. You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
 
-**`classes_colors.txt`** file is custom, and not provided in the original Pascal VOC Dataset contains information about instance mask colors associated with classes in Pascal VOC Project.
+**`classes_colors.txt`** file is custom, and not provided in the original Pascal VOC Dataset. File contains information about instance mask colors associated with classes in Pascal VOC Project.
 ```txt
 {
     'kiwi': (255, 0, 0),

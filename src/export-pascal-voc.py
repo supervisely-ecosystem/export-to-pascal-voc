@@ -29,7 +29,7 @@ trainval_sets_segm_name = 'Segmentation'
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
 
-pascal_contour_thickness = 4
+pascal_contour_thickness = 3
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'
@@ -128,9 +128,9 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
 
         xml_ann_obj_bndbox = ET.SubElement(xml_ann_obj, "bndbox")
         ET.SubElement(xml_ann_obj_bndbox, "xmin").text = str(bitmap_to_bbox.left)
-        ET.SubElement(xml_ann_obj_bndbox, "ymin").text = str(bitmap_to_bbox.bottom)
+        ET.SubElement(xml_ann_obj_bndbox, "ymin").text = str(bitmap_to_bbox.top)
         ET.SubElement(xml_ann_obj_bndbox, "xmax").text = str(bitmap_to_bbox.right)
-        ET.SubElement(xml_ann_obj_bndbox, "ymax").text = str(bitmap_to_bbox.top)
+        ET.SubElement(xml_ann_obj_bndbox, "ymax").text = str(bitmap_to_bbox.bottom)
 
     tree = ET.ElementTree(xml_root)
 

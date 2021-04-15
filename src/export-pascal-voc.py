@@ -29,7 +29,7 @@ trainval_sets_segm_name = 'Segmentation'
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
 
-pascal_contour_thickness = 3
+pascal_contour_thickness = 4
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'

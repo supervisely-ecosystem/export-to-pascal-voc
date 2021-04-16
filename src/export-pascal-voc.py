@@ -59,9 +59,9 @@ def from_ann_to_instance_mask(ann, mask_outpath):
         label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
         label.geometry.draw(mask, label.obj_class.color)
 
-    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-    cv2.imwrite(mask_outpath, mask)
-
+    im = Image.fromarray(mask)
+    im.convert("P", palette=Image.ADAPTIVE)
+    im.save(mask_outpath)
 
 def from_ann_to_class_mask(ann, mask_outpath):
     exist_colors = [[0, 0, 0], pascal_contour_color]
@@ -78,8 +78,9 @@ def from_ann_to_class_mask(ann, mask_outpath):
             label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
             label.geometry.draw(mask, new_color)
 
-    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
-    cv2.imwrite(mask_outpath, mask)
+    im = Image.fromarray(mask)
+    im.convert("P", palette=Image.ADAPTIVE)
+    im.save(mask_outpath)
 
 
 def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
@@ -235,8 +236,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     rgb_im = im.convert("RGB")
                     rgb_im.save(os.path.join(result_images_dir, jpg_image_path))
                     os.remove(orig_image_path)
+                    app_logger.info(f"Image has been converted from '{img_ext}' to '.jpg'")
 
-                app_logger.info(f"Images have been converted from '{img_ext}' to '.jpg'")
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)

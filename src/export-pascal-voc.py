@@ -1,4 +1,5 @@
 import os
+import cv2
 import numpy as np
 import lxml.etree as ET
 import supervisely_lib as sly
@@ -6,6 +7,7 @@ from PIL import Image
 from shutil import copyfile
 from collections import OrderedDict
 from supervisely_lib.imaging.color import generate_rgb
+
 
 my_app = sly.AppService()
 
@@ -29,7 +31,7 @@ trainval_sets_segm_name = 'Segmentation'
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
 
-pascal_contour_thickness = 0
+pascal_contour_thickness = 7
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
 pascal_contour_name = 'pascal_contour'
@@ -47,52 +49,37 @@ if train_split_coef > 1 or train_split_coef < 0:
     raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(train_split_coef))
 
 
-def get_palette_from_meta(meta):
-    if len(meta.obj_classes) == 0:
-        raise ValueError('There are no classes in you project')
-    palette = [[0, 0, 0]]
-    name_to_index = {}
-    for idx, obj_class in enumerate(meta.obj_classes):
-        palette.append(obj_class.color)
-        name_to_index[obj_class.name] = idx + 1
-    palette.append(pascal_contour_color)
-    name_to_index[pascal_contour_name] = len(name_to_index) + 1
-    return palette, name_to_index
-
-
-def from_ann_to_pascal_mask(ann, palette, name_to_index):
+def from_ann_to_instance_mask(ann, mask_outpath):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
-        label.geometry.draw(mask, name_to_index[label.obj_class.name])
-
-    mask = mask[:, :, 0]
-    pascal_mask = Image.fromarray(mask).convert('P')
-    pascal_mask.putpalette(np.array(palette, dtype=np.uint8))
-
-    return pascal_mask
-
-
-def from_ann_to_obj_class_mask(ann, palette, name_to_index):
-    exist_colors = palette[: -1]
-    need_colors = len(ann.labels) - len(exist_colors) + 1
-    for _ in range(need_colors):
-        new_color = generate_rgb(exist_colors)
-        exist_colors.append(new_color)
-
-    mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
-    for idx, label in enumerate(ann.labels):
         if label.obj_class.name == "neutral":
-            label.geometry.draw(mask, name_to_index["pascal_contour"])
-            exist_colors.append(palette[-1])
-        else:
-            label.geometry.draw(mask, idx + 1)
+            label.geometry.draw(mask, pascal_contour_color)
+            continue
+
+        label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
+        label.geometry.draw(mask, label.obj_class.color)
+
+    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
+    cv2.imwrite(mask_outpath, mask)
 
 
-    mask = mask[:, :, 0]
-    pascal_mask = Image.fromarray(mask).convert('P')
-    pascal_mask.putpalette(np.array(exist_colors, dtype=np.uint8))
+def from_ann_to_class_mask(ann, mask_outpath):
+    exist_colors = [[0, 0, 0], pascal_contour_color]
+    need_colors = len(ann.labels) - len(exist_colors) + 2
+    for _ in range(need_colors):
+        mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
+        for label in ann.labels:
+            if label.obj_class.name == "neutral":
+                label.geometry.draw(mask, pascal_contour_color)
+                continue
 
-    return pascal_mask
+            new_color = generate_rgb(exist_colors)
+            exist_colors.append(new_color)
+            label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
+            label.geometry.draw(mask, new_color)
+
+    mask = cv2.cvtColor(mask, cv2.COLOR_BGR2RGB)
+    cv2.imwrite(mask_outpath, mask)
 
 
 def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
@@ -114,6 +101,9 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
     ET.SubElement(xml_root, "segmented").text = "1" if len(ann.labels) > 0 else "0"
 
     for label in ann.labels:
+        if label.obj_class.name == "neutral":
+            continue
+
         bitmap_to_bbox = label.geometry.to_bbox()
 
         xml_ann_obj = ET.SubElement(xml_root, "object")
@@ -163,6 +153,8 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
         {'suffix': 'val', 'imgs': val_imgs},
     ]
     for obj_cls in meta_json.obj_classes:
+        if obj_cls.name == 'neutral':
+            continue
         for o in write_objs:
             with open(os.path.join(result_imgsets_main_subdir, f'{obj_cls.name}_{o["suffix"]}.txt'), 'w') as f:
                 for img_stats in o['imgs']:
@@ -188,7 +180,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     project_info = api.project.get_info_by_id(PROJECT_ID)
     meta_json = api.project.get_meta(PROJECT_ID)
     meta = sly.ProjectMeta.from_json(meta_json)
-    palette, name_to_index = get_palette_from_meta(meta)
     app_logger.info("Create palette")
 
     full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME_ENDING
@@ -210,14 +201,14 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     sly.fs.mkdir(result_class_dir_name)
     sly.fs.mkdir(result_obj_dir)
 
-    app_logger.info("Make Pascal format dirs")
+    app_logger.info("Pascal VOC directories has been created")
 
     images_stats = []
     custom_classes_colors = {}
 
     datasets = api.dataset.get_list(PROJECT_ID)
     for dataset in datasets:
-        progress = sly.Progress('Convert images and anns from dataset {}'.format(dataset.name), len(datasets),
+        progress = sly.Progress('Converting images and annotations from {} dataset'.format(dataset.name), len(datasets),
                                 app_logger)
 
         images = api.image.get_list(dataset.id)
@@ -235,20 +226,30 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 images_stats.append(cur_img_stats)
 
                 if img_ext not in VALID_IMG_EXT:
-                    image_path = os.path.join(result_images_dir, cur_img_filename)
-                    cur_img_filename = img_title + ".jpg"
+                    orig_image_path = os.path.join(result_images_dir, cur_img_filename)
 
-                    im = Image.open(image_path)
+                    jpg_image = img_title + ".jpg"
+                    jpg_image_path = os.path.join(result_images_dir, jpg_image)
+
+                    im = Image.open(orig_image_path)
                     rgb_im = im.convert("RGB")
-                    rgb_im.save(os.path.join(result_images_dir, cur_img_filename))
+                    rgb_im.save(os.path.join(result_images_dir, jpg_image_path))
+                    os.remove(orig_image_path)
+
+                app_logger.info(f"Images have been converted from '{img_ext}' to '.jpg'")
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
-
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)
                 if tag is not None:
                     cur_img_stats['dataset'] = tag.meta.name
 
-                valid_labels = [label for label in ann.labels if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES]
+                valid_labels = []
+                for label in ann.labels:
+                    if type(label.geometry) in SUPPORTED_GEOMETRY_TYPES:
+                        valid_labels.append(label)
+                    else:
+                        app_logger.warn(
+                            f"Label has unsupported geometry type ({type(label.geometry)}) and will be skipped.")
 
                 ann = ann.clone(labels=valid_labels)
                 ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
@@ -256,11 +257,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     cur_img_stats['classes'].add(label.obj_class.name)
                     custom_classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
 
-                pascal_mask = from_ann_to_pascal_mask(ann, palette, name_to_index)
-                pascal_mask.save(os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
-
-                pascal_obj_class_mask = from_ann_to_obj_class_mask(ann, palette, name_to_index)
-                pascal_obj_class_mask.save(os.path.join(result_obj_dir, img_title + pascal_ann_ext))
+                from_ann_to_instance_mask(ann, os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
+                from_ann_to_class_mask(ann, os.path.join(result_obj_dir, img_title + pascal_ann_ext))
 
         progress.iter_done_report()
 

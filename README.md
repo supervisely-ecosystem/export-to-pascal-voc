@@ -89,48 +89,28 @@ The files train.txt, val.txt and trainval.txt list the image identifiers for the
 
 **Image Processing**
 
-In the original PASCAL VOC Dataset there are 21 classes - 20 objects and 1 background. The classes are coded as pixel values. For example, the pixels belonging to background have values 0. The rest of the classes are coded from 1 to 20 in alphabetical order. 
+In the original PASCAL VOC Dataset there are 21 classes - 20 objects and 1 background. The classes are coded as pixel values. The pixels belonging to background have values 0. The rest of the classes are coded from 1 to 20 in alphabetical order. 
 
 For example, in the original Pascal VOC dataset class aeroplane has pixel values equal to 1. In each image you may have multiple classes. 
 The label image is a single-channel 8-bit paletted image. In an 8-bit paletted image every pixel value is an index into an array of 256 RGB values. The color palette in PASCAL VOC is chosen such that adjacent values map to very different colors in order to make classes more easily distinguishable during visual inspection.To get the class labels, we read the corresponding groundtruth image using PIL and find the different pixel values present in the image. The pixel values will give you the object classes present in the image.
 
-We read Supervisely project meta and match palette colors with name_to_index dictionary.
-
-```python
-def get_palette_from_meta(meta):
-    if len(meta.obj_classes) == 0:
-        raise ValueError('There are no classes in you project')
-    palette = [[0, 0, 0]]
-    name_to_index = {}
-    for idx, obj_class in enumerate(meta.obj_classes):
-        palette.append(obj_class.color)
-        name_to_index[obj_class.name] = idx + 1
-    palette.append(pascal_contour_color)
-    name_to_index[pascal_contour_name] = len(name_to_index) + 1
-    
-    return palette, name_to_index
-    
-meta_json = api.project.get_meta(PROJECT_ID)
-meta = sly.ProjectMeta.from_json(meta_json)
-palette, name_to_index = get_palette_from_meta(meta)
-```    
-
-And then we use [PIL Image.convert](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert) to convert`RGB` images to `P` mode, this method translates pixels through the palette and significantly decrease annotation size. And then we draw masks for each label for Class and Object Segmentantion.
+We use [PIL Image.convert](https://pillow.readthedocs.io/en/stable/reference/Image.html#PIL.Image.Image.convert) to convert images to `P` mode, this method translates pixels through the palette and significantly decrease annotation size. And then we draw masks for each label for Class and Object Segmentantion.
 
 ```python
 # This example is used to draw Class Segmentantion Images
-def from_ann_to_pascal_mask(ann, palette, name_to_index, pascal_contour):
+def from_ann_to_instance_mask(ann, mask_outpath):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
-        label.geometry.draw(mask, name_to_index[label.obj_class.name])
-        if pascal_contour != 0:
-            label.geometry.draw_contour(mask, name_to_index[pascal_contour_name], 4)
+        if label.obj_class.name == "neutral":
+            label.geometry.draw(mask, pascal_contour_color)
+            continue
 
-    mask = mask[:, :, 0]
-    pascal_mask = Image.fromarray(mask).convert('P')
-    pascal_mask.putpalette(np.array(palette, dtype=np.uint8))
+        label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
+        label.geometry.draw(mask, label.obj_class.color)
 
-    return pascal_mask
+    im = Image.fromarray(mask)
+    im.convert("P", palette=Image.ADAPTIVE)
+    im.save(mask_outpath)
 ``` 
 
 ## How To Run 

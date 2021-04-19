@@ -205,7 +205,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     app_logger.info("Pascal VOC directories has been created")
 
     images_stats = []
-    custom_classes_colors = {}
+    classes_colors = {}
 
     datasets = api.dataset.get_list(PROJECT_ID)
     for dataset in datasets:
@@ -256,22 +256,25 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
                 for label in ann.labels:
                     cur_img_stats['classes'].add(label.obj_class.name)
-                    custom_classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
+                    classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
 
                 from_ann_to_instance_mask(ann, os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
                 from_ann_to_class_mask(ann, os.path.join(result_obj_dir, img_title + pascal_ann_ext))
 
         progress.iter_done_report()
 
-    custom_classes_colors = OrderedDict((sorted(custom_classes_colors.items(), key=lambda t: t[0])))
+    classes_colors = OrderedDict((sorted(classes_colors.items(), key=lambda t: t[0])))
 
     with open(os.path.join(RESULT_SUBDIR, "classes_colors.txt"), "w") as cc:
          cc.write("{\n")
-         for k in custom_classes_colors.keys():
-             if k != list(custom_classes_colors.keys())[-1]:
-                cc.write('    ' + f"'{k}': {custom_classes_colors[k]},\n")
+         cc.write('    ' + f"'neutral': {tuple(pascal_contour_color)},\n")
+         for k in classes_colors.keys():
+             if k == 'neutral':
+                 continue
+             if k != list(classes_colors.keys())[-1]:
+                cc.write('    ' + f"'{k}': {classes_colors[k]},\n")
              else:
-                cc.write('    ' + f"'{k}': {custom_classes_colors[k]}\n")
+                cc.write('    ' + f"'{k}': {classes_colors[k]}\n")
          cc.write("}")
 
     imgs_to_split = [i for i in images_stats if i['dataset'] is None]

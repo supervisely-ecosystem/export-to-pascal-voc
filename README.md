@@ -45,12 +45,14 @@ In addition, Pascal VOC format implies the presence of train/val. If images does
 
 **`colors.txt`** file is custom, and not provided in the original Pascal VOC Dataset. File contains information about instance mask colors associated with classes in Pascal VOC Project. This file is required by Supervisely Pascal VOC import plugin, if you are uploading custom dataset in Pascal VOC format.
 
+
 **`colors.txt`** example:
 ```txt
 neutral 224 224 192
 kiwi 255 0 0
 lemon 81 198 170
 ```
+Colors are indicated in **`RGB`** format.
 
 #### Pascal VOC format has the following ImageSets:
 

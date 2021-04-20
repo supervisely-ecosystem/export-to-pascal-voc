@@ -62,7 +62,7 @@ The files train.txt, val.txt, trainval.txt and test.txt list the image identifie
 * train: Training data.
 * val: Validation data.
 * trainval: The union of train and val.
-* test: Test data. **The test set is not provided by the export application.**
+* test: Test data. **The test set is not provided by the export application. You can use Validation data instead**
 
 The file `VOC/ImageSets/Main/<class>_<imgset>.txt` contains image identifiers and ground truth for a particular class and image set.
 For example the file car_train.txt applies to the ‘car’ class and train image set.

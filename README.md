@@ -45,12 +45,14 @@ In addition, Pascal VOC format implies the presence of train/val. If images does
 
 **`colors.txt`** file is custom, and not provided in the original Pascal VOC Dataset. File contains information about instance mask colors associated with classes in Pascal VOC Project. This file is required by Supervisely Pascal VOC import plugin, if you are uploading custom dataset in Pascal VOC format.
 
+
 **`colors.txt`** example:
 ```txt
 neutral 224 224 192
 kiwi 255 0 0
 lemon 81 198 170
 ```
+Colors are indicated in **`RGB`** format.
 
 #### Pascal VOC format has the following ImageSets:
 
@@ -62,7 +64,7 @@ The files train.txt, val.txt, trainval.txt and test.txt list the image identifie
 * train: Training data.
 * val: Validation data.
 * trainval: The union of train and val.
-* test: Test data. **The test set is not provided by the export application.**
+* test: Test data. **The test set is not provided by the export application. You can use Validation data instead**
 
 The file `VOC/ImageSets/Main/<class>_<imgset>.txt` contains image identifiers and ground truth for a particular class and image set.
 For example the file car_train.txt applies to the ‘car’ class and train image set.

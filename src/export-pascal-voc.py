@@ -1,5 +1,4 @@
 import os
-import cv2
 import numpy as np
 import lxml.etree as ET
 import supervisely_lib as sly
@@ -30,6 +29,8 @@ trainval_sets_segm_name = 'Segmentation'
 
 train_txt_name = 'train.txt'
 val_txt_name = 'val.txt'
+
+is_trainval = None
 
 pascal_contour_thickness = 7
 pascal_contour_color = [224, 224, 192]
@@ -134,7 +135,7 @@ def find_first_tag(img_tags, split_tags):
     return None
 
 
-def write_main_set(images_stats, meta_json, result_imgsets_dir):
+def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
     result_imgsets_main_subdir = os.path.join(result_imgsets_dir, trainval_sets_main_name)
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_main_subdir)
@@ -153,7 +154,14 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
         {'suffix': 'train', 'imgs': train_imgs},
         {'suffix': 'val', 'imgs': val_imgs},
     ]
+
+    if is_trainval == 1:
+       trainval_imgs = [i for i in images_stats if i['dataset'] == TRAIN_TAG_NAME + VAL_TAG_NAME]
+       write_objs[0] =  {'suffix': 'trainval', 'imgs': trainval_imgs}
+
     for obj_cls in meta_json.obj_classes:
+        if obj_cls.geometry_type not in SUPPORTED_GEOMETRY_TYPES:
+            continue
         if obj_cls.name == 'neutral':
             continue
         for o in write_objs:
@@ -163,12 +171,15 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
                     f.write(f'{img_stats["name"]} {v}\n')
 
 
-def write_segm_set(images_stats, result_imgsets_dir):
+def write_segm_set(is_trainval, images_stats, result_imgsets_dir):
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_segm_subdir)
 
     with open(os.path.join(result_imgsets_segm_subdir, 'trainval.txt'), 'w') as f:
-        f.writelines(i['name'] + '\n' for i in images_stats)
+        if is_trainval ==1:
+            f.writelines(i['name'] + '\n' for i in images_stats if i['dataset'] == TRAIN_TAG_NAME+VAL_TAG_NAME)
+        else:
+            f.writelines(i['name'] + '\n' for i in images_stats)
     with open(os.path.join(result_imgsets_segm_subdir, 'train.txt'), 'w') as f:
         f.writelines(i['name'] + '\n' for i in images_stats if i['dataset'] == TRAIN_TAG_NAME)
     with open(os.path.join(result_imgsets_segm_subdir, 'val.txt'), 'w') as f:
@@ -208,7 +219,13 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     classes_colors = {}
 
     datasets = api.dataset.get_list(PROJECT_ID)
+    dataset_names = ['trainval', 'val', 'train']
     for dataset in datasets:
+        if dataset.name in dataset_names:
+           is_trainval = 1
+        else:
+           is_trainval = 0
+
         progress = sly.Progress('Converting images and annotations from {} dataset'.format(dataset.name), len(datasets),
                                 app_logger)
 
@@ -223,8 +240,12 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 img_title, img_ext = os.path.splitext(image_info.name)
                 cur_img_filename = image_info.name
 
-                cur_img_stats = {'classes': set(), 'dataset': None, 'name': img_title}
-                images_stats.append(cur_img_stats)
+                if is_trainval == 1:
+                    cur_img_stats = {'classes': set(), 'dataset': dataset.name, 'name': img_title}
+                    images_stats.append(cur_img_stats)
+                else:
+                    cur_img_stats = {'classes': set(), 'dataset': None, 'name': img_title}
+                    images_stats.append(cur_img_stats)
 
                 if img_ext not in VALID_IMG_EXT:
                     orig_image_path = os.path.join(result_images_dir, cur_img_filename)
@@ -265,17 +286,16 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     classes_colors = OrderedDict((sorted(classes_colors.items(), key=lambda t: t[0])))
 
-    with open(os.path.join(RESULT_SUBDIR, "classes_colors.txt"), "w") as cc:
-         cc.write("{\n")
-         cc.write('    ' + f"'neutral': {tuple(pascal_contour_color)},\n")
+    with open(os.path.join(RESULT_SUBDIR, "colors.txt"), "w") as cc:
+         if len(pascal_contour_color) != 2:
+            app_logger.warn(f"Wrong colour input: {pascal_contour_color}")
+
+         cc.write(f"neutral {pascal_contour_color[0]} {pascal_contour_color[1]} {pascal_contour_color[2]}\n")
          for k in classes_colors.keys():
              if k == 'neutral':
                  continue
-             if k != list(classes_colors.keys())[-1]:
-                cc.write('    ' + f"'{k}': {classes_colors[k]},\n")
-             else:
-                cc.write('    ' + f"'{k}': {classes_colors[k]}\n")
-         cc.write("}")
+
+             cc.write(f"{k} {classes_colors[k][0]} {classes_colors[k][1]} {classes_colors[k][2]}\n")
 
     imgs_to_split = [i for i in images_stats if i['dataset'] is None]
     train_len = int(len(imgs_to_split) * train_split_coef)
@@ -283,8 +303,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     for img_stat in imgs_to_split[:train_len]: img_stat['dataset'] = TRAIN_TAG_NAME
     for img_stat in imgs_to_split[train_len:]: img_stat['dataset'] = VAL_TAG_NAME
 
-    write_segm_set(images_stats, result_imgsets_dir)
-    write_main_set(images_stats, meta, result_imgsets_dir)
+    write_segm_set(is_trainval, images_stats, result_imgsets_dir)
+    write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)
 
     sly.fs.archive_directory(RESULT_DIR, RESULT_ARCHIVE)
     app_logger.info("Result directory is archived")

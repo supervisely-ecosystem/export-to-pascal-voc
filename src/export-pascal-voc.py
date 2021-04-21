@@ -32,12 +32,11 @@ val_txt_name = 'val.txt'
 
 is_trainval = None
 
-pascal_contour_thickness = 7
+pascal_contour_thickness = int(os.environ['modal.state.pascalContourThickness'])
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
-pascal_contour_name = 'pascal_contour'
 
-train_split_coef = 0.8
+train_split_coef = float(os.environ['modal.state.trainSplitCoef'])
 
 TRAIN_TAG_NAME = 'train'
 VAL_TAG_NAME = 'val'

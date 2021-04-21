@@ -1,0 +1,11 @@
+
+<div>
+    <sly-field title="Contour Thickness"
+               description="Determines thickness of label contours on masks. Set to 0 if you don't need contours.">
+        <el-slider v-model="state.pascalContourThickness" :min="0" :max="10" show-input></el-slider>
+    </sly-field>
+    <sly-field title="Train/Val Split"
+               description="Split Images to train and val datasets with the given coefficent. If set to 0, all images will be placed to train dataset.">
+        <el-slider v-model="state.trainSplitCoef" :min="0" :max="1" :step="0.1" show-input></el-slider>
+    </sly-field>
+</div>

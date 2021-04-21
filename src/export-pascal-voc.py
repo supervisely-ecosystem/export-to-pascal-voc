@@ -188,6 +188,7 @@ def write_segm_set(is_trainval, images_stats, result_imgsets_dir):
 @my_app.callback("from_sly_to_pascal")
 @sly.timeit
 def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
+    global PASCAL_CONTOUR_THICKNESS, TRAIN_VAL_SPLIT_COEF
     project_info = api.project.get_info_by_id(PROJECT_ID)
     meta_json = api.project.get_meta(PROJECT_ID)
     meta = sly.ProjectMeta.from_json(meta_json)
@@ -286,10 +287,9 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     classes_colors = OrderedDict((sorted(classes_colors.items(), key=lambda t: t[0])))
 
     with open(os.path.join(RESULT_SUBDIR, "colors.txt"), "w") as cc:
-         if len(pascal_contour_color) != 2:
-            app_logger.warn(f"Wrong colour input: {pascal_contour_color}")
+         if PASCAL_CONTOUR_THICKNESS != 0:
+            cc.write(f"neutral {pascal_contour_color[0]} {pascal_contour_color[1]} {pascal_contour_color[2]}\n")
 
-         cc.write(f"neutral {pascal_contour_color[0]} {pascal_contour_color[1]} {pascal_contour_color[2]}\n")
          for k in classes_colors.keys():
              if k == 'neutral':
                  continue
@@ -301,6 +301,9 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     for img_stat in imgs_to_split[:train_len]: img_stat['dataset'] = TRAIN_TAG_NAME
     for img_stat in imgs_to_split[train_len:]: img_stat['dataset'] = VAL_TAG_NAME
+
+    if PASCAL_CONTOUR_THICKNESS != 0:
+        PASCAL_CONTOUR_THICKNESS = PASCAL_CONTOUR_THICKNESS + (PASCAL_CONTOUR_THICKNESS + 1)
 
     write_segm_set(is_trainval, images_stats, result_imgsets_dir)
     write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)

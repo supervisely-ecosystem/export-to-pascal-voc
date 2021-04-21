@@ -9,7 +9,7 @@
   "main_script": "src/export-pascal-voc.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
-    "pascalContourThickness": 7,
+    "pascalContourThickness": 3,
     "trainSplitCoef": 0.8
   },
   "task_location": "workspace_tasks",

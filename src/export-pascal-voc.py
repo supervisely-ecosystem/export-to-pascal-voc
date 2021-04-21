@@ -14,6 +14,9 @@ TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
 PROJECT_ID = int(os.environ['modal.state.slyProjectId'])
 
+PASCAL_CONTOUR_THICKNESS = int(os.environ['modal.state.pascalContourThickness'])
+TRAIN_VAL_SPLIT_COEF = float(os.environ['modal.state.trainSplitCoef'])
+
 ARCHIVE_NAME_ENDING = '_pascal_voc.tar.gz'
 RESULT_DIR_NAME_ENDING = '_pascal_voc'
 RESULT_SUBDIR_NAME = 'VOCdevkit/VOC'
@@ -32,11 +35,8 @@ val_txt_name = 'val.txt'
 
 is_trainval = None
 
-pascal_contour_thickness = int(os.environ['modal.state.pascalContourThickness'])
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = '.png'
-
-train_split_coef = float(os.environ['modal.state.trainSplitCoef'])
 
 TRAIN_TAG_NAME = 'train'
 VAL_TAG_NAME = 'val'
@@ -45,8 +45,8 @@ SPLIT_TAGS = set([TRAIN_TAG_NAME, VAL_TAG_NAME])
 VALID_IMG_EXT = set(['.jpe', '.jpeg', '.jpg'])
 SUPPORTED_GEOMETRY_TYPES = set([sly.Bitmap, sly.Polygon])
 
-if train_split_coef > 1 or train_split_coef < 0:
-    raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(train_split_coef))
+if TRAIN_VAL_SPLIT_COEF > 1 or TRAIN_VAL_SPLIT_COEF < 0:
+    raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(TRAIN_VAL_SPLIT_COEF))
 
 
 def from_ann_to_instance_mask(ann, mask_outpath):
@@ -56,7 +56,7 @@ def from_ann_to_instance_mask(ann, mask_outpath):
             label.geometry.draw(mask, pascal_contour_color)
             continue
 
-        label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
+        label.geometry.draw_contour(mask, pascal_contour_color, PASCAL_CONTOUR_THICKNESS)
         label.geometry.draw(mask, label.obj_class.color)
 
     im = Image.fromarray(mask)
@@ -75,7 +75,7 @@ def from_ann_to_class_mask(ann, mask_outpath):
 
             new_color = generate_rgb(exist_colors)
             exist_colors.append(new_color)
-            label.geometry.draw_contour(mask, pascal_contour_color, pascal_contour_thickness)
+            label.geometry.draw_contour(mask, pascal_contour_color, PASCAL_CONTOUR_THICKNESS)
             label.geometry.draw(mask, new_color)
 
     im = Image.fromarray(mask)
@@ -297,7 +297,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
              cc.write(f"{k} {classes_colors[k][0]} {classes_colors[k][1]} {classes_colors[k][2]}\n")
 
     imgs_to_split = [i for i in images_stats if i['dataset'] is None]
-    train_len = int(len(imgs_to_split) * train_split_coef)
+    train_len = int(len(imgs_to_split) * TRAIN_VAL_SPLIT_COEF)
 
     for img_stat in imgs_to_split[:train_len]: img_stat['dataset'] = TRAIN_TAG_NAME
     for img_stat in imgs_to_split[train_len:]: img_stat['dataset'] = VAL_TAG_NAME

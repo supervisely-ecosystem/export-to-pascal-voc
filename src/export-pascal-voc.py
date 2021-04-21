@@ -49,21 +49,21 @@ if TRAIN_VAL_SPLIT_COEF > 1 or TRAIN_VAL_SPLIT_COEF < 0:
     raise ValueError('train_val_split_coef should be between 0 and 1, your data is {}'.format(TRAIN_VAL_SPLIT_COEF))
 
 
-def from_ann_to_instance_mask(ann, mask_outpath):
+def from_ann_to_instance_mask(ann, mask_outpath, contour_thickness):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
         if label.obj_class.name == "neutral":
             label.geometry.draw(mask, pascal_contour_color)
             continue
 
-        label.geometry.draw_contour(mask, pascal_contour_color, PASCAL_CONTOUR_THICKNESS)
+        label.geometry.draw_contour(mask, pascal_contour_color, contour_thickness)
         label.geometry.draw(mask, label.obj_class.color)
 
     im = Image.fromarray(mask)
     im.convert("P", palette=Image.ADAPTIVE)
     im.save(mask_outpath)
 
-def from_ann_to_class_mask(ann, mask_outpath):
+def from_ann_to_class_mask(ann, mask_outpath, contour_thickness):
     exist_colors = [[0, 0, 0], pascal_contour_color]
     need_colors = len(ann.labels) - len(exist_colors) + 2
     for _ in range(need_colors):
@@ -75,7 +75,7 @@ def from_ann_to_class_mask(ann, mask_outpath):
 
             new_color = generate_rgb(exist_colors)
             exist_colors.append(new_color)
-            label.geometry.draw_contour(mask, pascal_contour_color, PASCAL_CONTOUR_THICKNESS)
+            label.geometry.draw_contour(mask, pascal_contour_color, contour_thickness)
             label.geometry.draw(mask, new_color)
 
     im = Image.fromarray(mask)
@@ -279,8 +279,12 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     cur_img_stats['classes'].add(label.obj_class.name)
                     classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
 
-                from_ann_to_instance_mask(ann, os.path.join(result_class_dir_name, img_title + pascal_ann_ext))
-                from_ann_to_class_mask(ann, os.path.join(result_obj_dir, img_title + pascal_ann_ext))
+                fake_contour_th = 0
+                if PASCAL_CONTOUR_THICKNESS != 0:
+                    fake_contour_th = 2 * PASCAL_CONTOUR_THICKNESS + 1
+
+                from_ann_to_instance_mask(ann, os.path.join(result_class_dir_name, img_title + pascal_ann_ext), fake_contour_th)
+                from_ann_to_class_mask(ann, os.path.join(result_obj_dir, img_title + pascal_ann_ext), fake_contour_th)
 
         progress.iter_done_report()
 
@@ -301,9 +305,6 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     for img_stat in imgs_to_split[:train_len]: img_stat['dataset'] = TRAIN_TAG_NAME
     for img_stat in imgs_to_split[train_len:]: img_stat['dataset'] = VAL_TAG_NAME
-
-    if PASCAL_CONTOUR_THICKNESS != 0:
-        PASCAL_CONTOUR_THICKNESS = PASCAL_CONTOUR_THICKNESS + (PASCAL_CONTOUR_THICKNESS + 1)
 
     write_segm_set(is_trainval, images_stats, result_imgsets_dir)
     write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)

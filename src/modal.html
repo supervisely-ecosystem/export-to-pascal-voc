@@ -4,8 +4,8 @@
                description="Determines thickness of label contours on masks. Set to 0 if you don't need contours.">
         <el-slider v-model="state.pascalContourThickness" :min="0" :max="5" show-input></el-slider>
     </sly-field>
-    <sly-field title="Train/Val Split"
-               description="Split Images to train and val datasets with the given coefficient. By default split size is set to 0.8, it means that 80% of data will be placed to train dataset. If set to 0, all images will be placed to train dataset.">
+    <sly-field title="Train/Val Split Size"
+               description="Split Images to 'train' and 'val' datasets with the given coefficient. By default split size is set to 0.8, it means that 80% of data will be placed to 'train' dataset. If set to 0, all images will be placed to 'val' dataset.">
         <el-slider v-model="state.trainSplitCoef" :min="0" :max="1" :step="0.1" show-input></el-slider>
     </sly-field>
 </div>

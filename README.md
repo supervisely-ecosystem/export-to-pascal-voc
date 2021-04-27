@@ -126,6 +126,12 @@ def from_ann_to_instance_mask(ann, mask_outpath):
 
 ## How to use
 
+Choose `Contour Thickness` in modal window to determine thickness of label contours on masks. If you don't need contours at all set thickness to `0`.
+
+Choose `Train/Val Split` size for `train` and `val` datasets. By default split size is set to `0.8`, it means that 80% of data will be placed to `train` and 20% to `val` dataset. If set to `0`, all images will be placed to `val` dataset. If `Train/Val Split` size is `0.1` at least 1 image will always be placed to `train` dataset. 
+
+<img src="https://i.imgur.com/nP0sevF.png" width="400"/>
+
 App creates task in `workspace tasks` list. Once app is finished, you will see download link to resulting tar archive. 
 
 <img src="https://i.imgur.com/MTjig3H.png"/>

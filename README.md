@@ -25,7 +25,7 @@ Converts [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format
 ## Preparation
 There are special requirements for Supervisely project, classes must have `Polygon` or `Bitmap` shape, all other shapes will be skipped. It means that only labeled objects with these shapes will be rendered as masks.
 
-Pascal VOC format stores all data in separate folders. Image classes bounding boxes and additional information are stored in `xml` files. Segmentantion class and object masks are placed into `SegmentationClass` and `SegmentationObject` folders respectively. **All image Tags, except `train` and `val` will be skipped**.
+Pascal VOC format stores all data in separate folders. Image classes bounding boxes and additional information are stored in `.xml` files. Segmentantion class and object masks are placed into `SegmentationClass` and `SegmentationObject` folders respectively. **All image Tags, except `train` and `val` will be skipped**.
 
 #### Exported Pascal VOC Project directory has the following structure:
 * Voc

@@ -190,7 +190,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     project_info = api.project.get_info_by_id(PROJECT_ID)
     meta_json = api.project.get_meta(PROJECT_ID)
     meta = sly.ProjectMeta.from_json(meta_json)
-    app_logger.info("Create palette")
+    app_logger.info("Palette has been created")
 
     full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME_ENDING
     full_result_dir_name = str(project_info.id) + '_' + project_info.name + RESULT_DIR_NAME_ENDING
@@ -211,14 +211,14 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     sly.fs.mkdir(result_class_dir_name)
     sly.fs.mkdir(result_obj_dir)
 
-    app_logger.info("Pascal VOC directories has been created")
+    app_logger.info("Pascal VOC directories have been created")
 
     images_stats = []
     classes_colors = {}
 
     datasets = api.dataset.get_list(PROJECT_ID)
     dataset_names = ['trainval', 'val', 'train']
-    progress = sly.Progress('Converting', api.project.get_images_count(PROJECT_ID), app_logger)
+    progress = sly.Progress('Preparing images for export', api.project.get_images_count(PROJECT_ID), app_logger)
     for dataset in datasets:
         if dataset.name in dataset_names:
            is_trainval = 1
@@ -251,9 +251,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
                     im = sly.image.read(orig_image_path)
                     sly.image.write(jpg_image_path, im)
-
-                    os.remove(orig_image_path)
-                    app_logger.info(f"Image has been converted from '{img_ext}' to '.jpg'")
+                    sly.fs.silent_remove(orig_image_path)
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)

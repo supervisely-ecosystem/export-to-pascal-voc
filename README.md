@@ -16,7 +16,7 @@
 [![used by teams](https://app.supervise.ly/public/api/v3/ecosystem.counters?repo=supervisely-ecosystem/export-to-pascal-voc&counter=downloads&label=used%20by%20teams)](https://supervise.ly)
 [![runs](https://app.supervise.ly/public/api/v3/ecosystem.counters?repo=supervisely-ecosystem/export-to-pascal-voc&counter=runs&label=runs&123)](https://supervise.ly)
 
-</div>
+ </div>
 
 ## Overview
 Converts [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) format project to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.

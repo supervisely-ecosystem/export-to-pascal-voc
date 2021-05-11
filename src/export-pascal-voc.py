@@ -7,7 +7,6 @@ from shutil import copyfile
 from collections import OrderedDict
 from supervisely_lib.imaging.color import generate_rgb
 
-
 my_app = sly.AppService()
 
 TEAM_ID = int(os.environ['context.teamId'])
@@ -63,20 +62,19 @@ def from_ann_to_instance_mask(ann, mask_outpath, contour_thickness):
     im.convert("P", palette=Image.ADAPTIVE)
     im.save(mask_outpath)
 
+
 def from_ann_to_class_mask(ann, mask_outpath, contour_thickness):
     exist_colors = [[0, 0, 0], pascal_contour_color]
-    need_colors = len(ann.labels) - len(exist_colors) + 2
-    for _ in range(need_colors):
-        mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
-        for label in ann.labels:
-            if label.obj_class.name == "neutral":
-                label.geometry.draw(mask, pascal_contour_color)
-                continue
+    mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
+    for label in ann.labels:
+        if label.obj_class.name == "neutral":
+            label.geometry.draw(mask, pascal_contour_color)
+            continue
 
-            new_color = generate_rgb(exist_colors)
-            exist_colors.append(new_color)
-            label.geometry.draw_contour(mask, pascal_contour_color, contour_thickness)
-            label.geometry.draw(mask, new_color)
+        new_color = generate_rgb(exist_colors)
+        exist_colors.append(new_color)
+        label.geometry.draw_contour(mask, pascal_contour_color, contour_thickness)
+        label.geometry.draw(mask, new_color)
 
     im = Image.fromarray(mask)
     im.convert("P", palette=Image.ADAPTIVE)
@@ -139,7 +137,6 @@ def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_main_subdir)
 
-
     res_files = ["trainval.txt", "train.txt", "val.txt"]
     for file in os.listdir(result_imgsets_segm_subdir):
         if file in res_files:
@@ -189,6 +186,7 @@ def write_segm_set(is_trainval, images_stats, result_imgsets_dir):
 @sly.timeit
 def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     global PASCAL_CONTOUR_THICKNESS, TRAIN_VAL_SPLIT_COEF
+
     project_info = api.project.get_info_by_id(PROJECT_ID)
     meta_json = api.project.get_meta(PROJECT_ID)
     meta = sly.ProjectMeta.from_json(meta_json)
@@ -197,15 +195,15 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     full_archive_name = str(project_info.id) + '_' + project_info.name + ARCHIVE_NAME_ENDING
     full_result_dir_name = str(project_info.id) + '_' + project_info.name + RESULT_DIR_NAME_ENDING
 
-    RESULT_ARCHIVE = os.path.join(my_app.data_dir, full_archive_name)
-    RESULT_DIR = os.path.join(my_app.data_dir, full_result_dir_name)
-    RESULT_SUBDIR = os.path.join(RESULT_DIR, RESULT_SUBDIR_NAME)
+    result_archive = os.path.join(my_app.data_dir, full_archive_name)
+    result_dir = os.path.join(my_app.data_dir, full_result_dir_name)
+    result_subdir = os.path.join(result_dir, RESULT_SUBDIR_NAME)
 
-    result_ann_dir = os.path.join(RESULT_SUBDIR, ann_dir_name)
-    result_images_dir = os.path.join(RESULT_SUBDIR, images_dir_name)
-    result_class_dir_name = os.path.join(RESULT_SUBDIR, ann_class_dir_name)
-    result_obj_dir = os.path.join(RESULT_SUBDIR, ann_obj_dir_name)
-    result_imgsets_dir = os.path.join(RESULT_SUBDIR, trainval_sets_dir_name)
+    result_ann_dir = os.path.join(result_subdir, ann_dir_name)
+    result_images_dir = os.path.join(result_subdir, images_dir_name)
+    result_class_dir_name = os.path.join(result_subdir, ann_class_dir_name)
+    result_obj_dir = os.path.join(result_subdir, ann_obj_dir_name)
+    result_imgsets_dir = os.path.join(result_subdir, trainval_sets_dir_name)
 
     sly.fs.mkdir(result_ann_dir)
     sly.fs.mkdir(result_imgsets_dir)
@@ -220,14 +218,12 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     datasets = api.dataset.get_list(PROJECT_ID)
     dataset_names = ['trainval', 'val', 'train']
+    progress = sly.Progress('Converting', api.project.get_images_count(PROJECT_ID), app_logger)
     for dataset in datasets:
         if dataset.name in dataset_names:
            is_trainval = 1
         else:
            is_trainval = 0
-
-        progress = sly.Progress('Converting images and annotations from {} dataset'.format(dataset.name), len(datasets),
-                                app_logger)
 
         images = api.image.get_list(dataset.id)
         for batch in sly.batched(images):
@@ -253,12 +249,11 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     jpg_image = img_title + ".jpg"
                     jpg_image_path = os.path.join(result_images_dir, jpg_image)
 
-                    im = Image.open(orig_image_path)
-                    rgb_im = im.convert("RGB")
-                    rgb_im.save(os.path.join(result_images_dir, jpg_image_path))
+                    im = sly.image.read(orig_image_path)
+                    sly.image.write(os.path.join(result_images_dir, jpg_image_path), im)
+
                     os.remove(orig_image_path)
                     app_logger.info(f"Image has been converted from '{img_ext}' to '.jpg'")
-
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
                 tag = find_first_tag(ann.img_tags, SPLIT_TAGS)
@@ -286,11 +281,11 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                 from_ann_to_instance_mask(ann, os.path.join(result_class_dir_name, img_title + pascal_ann_ext), fake_contour_th)
                 from_ann_to_class_mask(ann, os.path.join(result_obj_dir, img_title + pascal_ann_ext), fake_contour_th)
 
-        progress.iter_done_report()
+                progress.iter_done_report()
 
     classes_colors = OrderedDict((sorted(classes_colors.items(), key=lambda t: t[0])))
 
-    with open(os.path.join(RESULT_SUBDIR, "colors.txt"), "w") as cc:
+    with open(os.path.join(result_subdir, "colors.txt"), "w") as cc:
          if PASCAL_CONTOUR_THICKNESS != 0:
             cc.write(f"neutral {pascal_contour_color[0]} {pascal_contour_color[1]} {pascal_contour_color[2]}\n")
 
@@ -309,7 +304,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     write_segm_set(is_trainval, images_stats, result_imgsets_dir)
     write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)
 
-    sly.fs.archive_directory(RESULT_DIR, RESULT_ARCHIVE)
+    sly.fs.archive_directory(result_dir, result_archive)
     app_logger.info("Result directory is archived")
 
     upload_progress = []
@@ -323,7 +318,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                                                 is_size=True))
         upload_progress[0].set_current_value(monitor.bytes_read)
 
-    file_info = api.file.upload(TEAM_ID, RESULT_ARCHIVE, remote_archive_path,
+    file_info = api.file.upload(TEAM_ID, result_archive, remote_archive_path,
                                 lambda m: _print_progress(m, upload_progress))
     app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.full_storage_url))
     api.task.set_output_archive(task_id, file_info.id, full_archive_name, file_url=file_info.full_storage_url)
@@ -338,7 +333,6 @@ def main():
         "PROJECT_ID": PROJECT_ID
     })
 
-    # Run application service
     my_app.run(initial_events=[{"command": "from_sly_to_pascal"}])
 
 

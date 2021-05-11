@@ -250,7 +250,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     jpg_image_path = os.path.join(result_images_dir, jpg_image)
 
                     im = sly.image.read(orig_image_path)
-                    sly.image.write(os.path.join(result_images_dir, jpg_image_path), im)
+                    sly.image.write(jpg_image_path, im)
 
                     os.remove(orig_image_path)
                     app_logger.info(f"Image has been converted from '{img_ext}' to '.jpg'")

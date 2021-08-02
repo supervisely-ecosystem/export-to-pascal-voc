@@ -59,7 +59,7 @@ def from_ann_to_instance_mask(ann, mask_outpath, contour_thickness):
         label.geometry.draw(mask, label.obj_class.color)
 
     im = Image.fromarray(mask)
-    im.convert("P", palette=Image.ADAPTIVE)
+    im = im.convert("P", palette=Image.ADAPTIVE)
     im.save(mask_outpath)
 
 
@@ -77,7 +77,7 @@ def from_ann_to_class_mask(ann, mask_outpath, contour_thickness):
         label.geometry.draw(mask, new_color)
 
     im = Image.fromarray(mask)
-    im.convert("P", palette=Image.ADAPTIVE)
+    im = im.convert("P", palette=Image.ADAPTIVE)
     im.save(mask_outpath)
 
 

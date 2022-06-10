@@ -1,13 +1,14 @@
 import os
 import numpy as np
 import lxml.etree as ET
-import supervisely_lib as sly
+import supervisely as sly
 from PIL import Image
 from shutil import copyfile
 from collections import OrderedDict
 from supervisely.imaging.color import generate_rgb
+from supervisely.app.v1.app_service import AppService
 
-my_app = sly.AppService()
+my_app = AppService()
 
 TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])

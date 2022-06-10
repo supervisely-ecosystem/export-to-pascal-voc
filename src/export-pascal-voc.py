@@ -319,8 +319,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     file_info = api.file.upload(TEAM_ID, result_archive, remote_archive_path,
                                 lambda m: _print_progress(m, upload_progress))
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.path))
-    api.task.set_output_archive(task_id, file_info.id, full_archive_name, file_url=file_info.path)
+    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
+    api.task.set_output_archive(task_id, file_info.id, full_archive_name, file_url=file_info.storage_path)
 
     my_app.stop()
 

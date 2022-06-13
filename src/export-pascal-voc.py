@@ -1,13 +1,14 @@
 import os
 import numpy as np
 import lxml.etree as ET
-import supervisely_lib as sly
+import supervisely as sly
 from PIL import Image
 from shutil import copyfile
 from collections import OrderedDict
-from supervisely_lib.imaging.color import generate_rgb
+from supervisely.imaging.color import generate_rgb
+from supervisely.app.v1.app_service import AppService
 
-my_app = sly.AppService()
+my_app = AppService()
 
 TEAM_ID = int(os.environ['context.teamId'])
 WORKSPACE_ID = int(os.environ['context.workspaceId'])
@@ -318,8 +319,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
 
     file_info = api.file.upload(TEAM_ID, result_archive, remote_archive_path,
                                 lambda m: _print_progress(m, upload_progress))
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.full_storage_url))
-    api.task.set_output_archive(task_id, file_info.id, full_archive_name, file_url=file_info.full_storage_url)
+    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
+    api.task.set_output_archive(task_id, file_info.id, full_archive_name, file_url=file_info.storage_path)
 
     my_app.stop()
 

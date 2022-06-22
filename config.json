@@ -2,7 +2,7 @@
   "name": "Export to Pascal VOC",
   "type": "app",
   "categories": [
-    "pointclouds",
+    "images",
     "export"
   ],
   "description": "Converts Supervisely Project to Pascal VOC format",

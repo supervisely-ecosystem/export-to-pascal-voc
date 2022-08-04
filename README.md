@@ -12,8 +12,8 @@
 
 [![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-to-pascal-voc)
-[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/export-to-pascal-voc)](https://supervise.ly)
-[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/export-to-pascal-voc)](https://supervise.ly)
+[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/export-to-pascal-voc.png)](https://supervise.ly)
+[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/export-to-pascal-voc.png)](https://supervise.ly)
 
 </div>
 

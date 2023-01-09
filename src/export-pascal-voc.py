@@ -307,7 +307,8 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     app_logger.info("Result directory is archived")
 
     upload_progress = []
-    remote_archive_path = "/ApplicationsData/Export-to-Pascal-VOC/{}/{}".format(task_id, full_archive_name)
+    remote_archive_path = os.path.join(
+        sly.team_files.RECOMMENDED_EXPORT_PATH, "export-to-Pascal-VOC/{}/{}".format(task_id, full_archive_name))
 
     def _print_progress(monitor, upload_progress):
         if len(upload_progress) == 0:

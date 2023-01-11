@@ -1,4 +1,4 @@
-supervisely==6.68.95
+supervisely==6.68.109
 lxml==4.6.3
 numpy>=1.19.4
 Pillow>=8.0.1

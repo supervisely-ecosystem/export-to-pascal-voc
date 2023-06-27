@@ -120,7 +120,7 @@ def from_ann_to_instance_mask(ann, mask_outpath):
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export to Pascal VOC` 
 
-<img src="https://i.imgur.com/0DqaKq1.png" width="600px"/>
+<img src="media/htr.png" width="600px"/>
 
 
 ## How to use
@@ -129,11 +129,11 @@ Choose `Contour Thickness` in modal window to determine thickness of label conto
 
 Choose `Train/Val Split Size` for `train` and `val` datasets. By default split size is set to `0.8`, it means that 80% of data will be placed to `train` and 20% to `val` dataset. If set to `0`, all images will be placed to `val` dataset. If `Train/Val Split Size` is `0.1` at least 1 image will always be placed to `train` dataset. 
 
-<img src="https://i.imgur.com/wrmRPyX.png"/>
+<img src="media/htu.png"/>
 
 App creates task in `workspace tasks` list. Once app is finished, you will see download link to resulting tar archive. 
 
-<img src="https://i.imgur.com/MTjig3H.png"/>
+<img src="media/htu2.png"/>
 
 Resulting archive is saved in : 
 

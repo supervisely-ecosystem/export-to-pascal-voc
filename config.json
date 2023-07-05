@@ -15,7 +15,7 @@
     "trainSplitCoef": 0.8
   },
   "task_location": "workspace_tasks",
-  "icon": "https://i.imgur.com/zTseThz.png",
+  "icon": "media/icon.png",
   "icon_background": "#FFFFFF",
   "headless": true,
   "context_menu": {

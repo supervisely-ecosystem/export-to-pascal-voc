@@ -6,7 +6,7 @@
         "export"
     ],
     "description": "Converts Supervisely Project to Pascal VOC format",
-    "docker_image": "supervisely/import-export:0.0.2",
+    "docker_image": "supervisely/import-export:0.0.5",
     "instance_version": "6.5.1",
     "main_script": "src/export-pascal-voc.py",
     "modal_template": "src/modal.html",

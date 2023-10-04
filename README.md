@@ -22,7 +22,8 @@ Converts [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format
 
 
 ## Preparation
-There are special requirements for Supervisely project, classes must have `Polygon` or `Bitmap` shape, all other shapes will be skipped. It means that only labeled objects with these shapes will be rendered as masks.
+
+There are special requirements for input Supervisely project, classes must have `Polygon`, `Bitmap` or `Rectangle` shape, all other shapes will be skipped. Only objects with `Polygon` and `Bitmap` shapes will be rendered as masks.
 
 Pascal VOC format stores all data in separate folders. Image classes bounding boxes and additional information are stored in `.xml` files. Segmentantion class and object masks are placed into `SegmentationClass` and `SegmentationObject` folders respectively. **All image Tags, except `train` and `val` will be skipped**.
 
@@ -135,6 +136,6 @@ App creates task in `workspace tasks` list. Once app is finished, you will see d
 
 <img src="https://i.imgur.com/MTjig3H.png"/>
 
-Resulting archive is saved in : 
+Resulting archive is saved in:
 
 `Current Team` -> `Files` -> `/pascal_voc_format/<task_id>/<project_id>_<project_name>_pascal_format.tar`. 

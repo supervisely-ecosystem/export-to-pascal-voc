@@ -72,7 +72,7 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
 
     is_segmented = 0
     for label in ann.labels:
-        if label.obj_class.geometry != sly.Rectangle:
+        if label.obj_class.geometry_type != sly.Rectangle:
             is_segmented = 1
             break
             

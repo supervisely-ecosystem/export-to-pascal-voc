@@ -69,7 +69,14 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
     ET.SubElement(xml_root_size, "height").text = str(image_info.height)
     ET.SubElement(xml_root_size, "depth").text = "3"
 
-    ET.SubElement(xml_root, "segmented").text = "1" if len(ann.labels) > 0 else "0"
+
+    is_segmented = 0
+    for label in ann.labels:
+        if label.obj_class.geometry != sly.Rectangle:
+            is_segmented = 1
+            break
+            
+    ET.SubElement(xml_root, "segmented").text = is_segmented
 
     for label in ann.labels:
         if label.obj_class.name == "neutral":

@@ -3,8 +3,8 @@
   "type": "app",
   "categories": ["images", "export"],
   "description": "Converts Supervisely Project to Pascal VOC format",
-  "docker_image": "supervisely/import-export:6.72.147",
-  "instance_version": "6.5.1",
+  "docker_image": "supervisely/import-export:6.73.4",
+  "instance_version": "6.8.73",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {

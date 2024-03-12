@@ -1,23 +1,21 @@
 import os
-import supervisely as sly
 from collections import OrderedDict
+
+import supervisely as sly
+
 import globals as g
 import utils
 
 
-@g.my_app.callback("from_sly_to_pascal")
-@sly.timeit
-def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
-    project_info = api.project.get_info_by_id(g.PROJECT_ID)
-    meta_json = api.project.get_meta(g.PROJECT_ID)
+def from_sly_to_pascal(api: sly.Api):
+    project_info = api.project.get_info_by_id(g.project_id)
+    meta_json = api.project.get_meta(g.project_id)
     meta = sly.ProjectMeta.from_json(meta_json)
-    app_logger.info("Palette has been created")
+    sly.logger.info("Palette has been created")
 
-    full_archive_name = f"{str(project_info.id)}_{project_info.name}{g.ARCHIVE_NAME_ENDING}"
     full_result_dir_name = f"{str(project_info.id)}_{project_info.name}{g.RESULT_DIR_NAME_ENDING}"
 
-    result_archive = os.path.join(g.my_app.data_dir, full_archive_name)
-    result_dir = os.path.join(g.my_app.data_dir, full_result_dir_name)
+    result_dir = os.path.join(g.DATA_DIR, full_result_dir_name)
     result_subdir = os.path.join(result_dir, g.RESULT_SUBDIR_NAME)
 
     result_ann_dir = os.path.join(result_subdir, g.ann_dir_name)
@@ -32,15 +30,15 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     sly.fs.mkdir(result_class_dir_name)
     sly.fs.mkdir(result_obj_dir)
 
-    app_logger.info("Pascal VOC directories have been created")
+    sly.logger.info("Pascal VOC directories have been created")
 
     images_stats = []
     classes_colors = {}
 
-    datasets = api.dataset.get_list(g.PROJECT_ID)
+    datasets = api.dataset.get_list(g.project_id, recursive=True)
     dataset_names = ["trainval", "val", "train"]
     progress = sly.Progress(
-        "Preparing images for export", api.project.get_images_count(g.PROJECT_ID), app_logger
+        "Preparing images for export", api.project.get_images_count(g.project_id), sly.logger
     )
     for dataset in datasets:
         if dataset.name in dataset_names:
@@ -86,7 +84,7 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
                     if type(label.geometry) in g.SUPPORTED_GEOMETRY_TYPES:
                         valid_labels.append(label)
                     else:
-                        app_logger.warn(
+                        sly.logger.warn(
                             f"Label has unsupported geometry type ({type(label.geometry)}) and will be skipped."
                         )
 
@@ -136,49 +134,9 @@ def from_sly_to_pascal(api: sly.Api, task_id, context, state, app_logger):
     utils.write_segm_set(is_trainval, images_stats, result_imgsets_dir)
     utils.write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)
 
-    sly.fs.archive_directory(result_dir, result_archive)
-    app_logger.info("Result directory is archived")
-
-    upload_progress = []
-    remote_archive_path = os.path.join(
-        sly.team_files.RECOMMENDED_EXPORT_PATH,
-        "export-to-Pascal-VOC/{}/{}".format(task_id, full_archive_name),
-    )
-
-    def _print_progress(monitor, upload_progress):
-        if len(upload_progress) == 0:
-            upload_progress.append(
-                sly.Progress(
-                    message="Upload {!r}".format(full_archive_name),
-                    total_cnt=monitor.len,
-                    ext_logger=app_logger,
-                    is_size=True,
-                )
-            )
-        upload_progress[0].set_current_value(monitor.bytes_read)
-
-    file_info = api.file.upload(
-        g.TEAM_ID,
-        result_archive,
-        remote_archive_path,
-        lambda m: _print_progress(m, upload_progress),
-    )
-    app_logger.info("Uploaded to Team-Files: {!r}".format(file_info.storage_path))
-    api.task.set_output_archive(
-        task_id, file_info.id, full_archive_name, file_url=file_info.storage_path
-    )
-
-    g.my_app.stop()
-
-
-def main():
-    sly.logger.info(
-        "Script arguments",
-        extra={"TEAM_ID": g.TEAM_ID, "WORKSPACE_ID": g.WORKSPACE_ID, "PROJECT_ID": g.PROJECT_ID},
-    )
-
-    g.my_app.run(initial_events=[{"command": "from_sly_to_pascal"}])
+    sly.output.set_download(result_dir)
 
 
 if __name__ == "__main__":
-    sly.main_wrapper("main", main, log_for_agent=False)
+    api = sly.Api.from_env()
+    from_sly_to_pascal(api)

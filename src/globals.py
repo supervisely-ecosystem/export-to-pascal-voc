@@ -1,25 +1,29 @@
 import os
-from dotenv import load_dotenv
+
 import supervisely as sly
-from supervisely.app.v1.app_service import AppService
+from dotenv import load_dotenv
 
 if sly.is_development():
     load_dotenv("local.env")
     load_dotenv(os.path.expanduser("~/supervisely.env"))
 
-
-my_app = AppService()
-
-TEAM_ID = int(os.environ["context.teamId"])
-WORKSPACE_ID = int(os.environ["context.workspaceId"])
-PROJECT_ID = int(os.environ["modal.state.slyProjectId"])
-
-PASCAL_CONTOUR_THICKNESS = int(os.environ["modal.state.pascalContourThickness"])
-TRAIN_VAL_SPLIT_COEF = float(os.environ["modal.state.trainSplitCoef"])
-
+# region constants
 ARCHIVE_NAME_ENDING = "_pascal_voc.tar.gz"
 RESULT_DIR_NAME_ENDING = "_pascal_voc"
 RESULT_SUBDIR_NAME = "VOCdevkit/VOC"
+DATA_DIR = os.path.join(os.getcwd(), "data")
+# endregion
+sly.fs.mkdir(DATA_DIR, remove_content_if_exists=True)
+
+# region envvars
+team_id = sly.env.team_id()
+workspace_id = sly.env.workspace_id()
+project_id = sly.env.project_id()
+
+PASCAL_CONTOUR_THICKNESS = int(os.environ["modal.state.pascalContourThickness"])
+TRAIN_VAL_SPLIT_COEF = float(os.environ["modal.state.trainSplitCoef"])
+# endregion
+
 
 images_dir_name = "JPEGImages"
 ann_dir_name = "Annotations"

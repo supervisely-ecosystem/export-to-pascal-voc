@@ -2,3 +2,6 @@
 .venv
 src/debug
 secret_debug.env
+data/
+.DS_Store
+__pycache__/

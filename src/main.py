@@ -49,12 +49,16 @@ def from_sly_to_pascal(api: sly.Api):
         images = api.image.get_list(dataset.id)
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
-            image_paths = [os.path.join(result_images_dir, image_info.name) for image_info in batch]
+            image_paths = [
+                os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
+                for image_info in batch
+            ]
 
             api.image.download_paths(dataset.id, image_ids, image_paths)
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             for image_info, ann_info in zip(batch, ann_infos):
                 img_title, img_ext = os.path.splitext(image_info.name)
+                img_title = f"{dataset.id}_{img_title}"
                 cur_img_filename = image_info.name
 
                 if is_trainval == 1:

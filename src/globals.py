@@ -2,6 +2,7 @@ import os
 
 import supervisely as sly
 from dotenv import load_dotenv
+from distutils.util import strtobool
 
 if sly.is_development():
     load_dotenv("local.env")
@@ -22,6 +23,7 @@ project_id = sly.env.project_id()
 
 PASCAL_CONTOUR_THICKNESS = int(os.environ["modal.state.pascalContourThickness"])
 TRAIN_VAL_SPLIT_COEF = float(os.environ["modal.state.trainSplitCoef"])
+ADD_PREFIX_TO_IMAGES = bool(strtobool(os.environ.get("modal.state.addPrefixToImages", "true")))
 # endregion
 
 

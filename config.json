@@ -12,7 +12,8 @@
   "modal_template": "src/modal.html",
   "modal_template_state": {
     "pascalContourThickness": 3,
-    "trainSplitCoef": 0.8
+    "trainSplitCoef": 0.8,
+    "addPrefixToImages": true
   },
   "task_location": "workspace_tasks",
   "icon": "https://i.imgur.com/zTseThz.png",

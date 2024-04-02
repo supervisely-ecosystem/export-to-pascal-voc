@@ -92,8 +92,8 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
     tree = ET.ElementTree(xml_root)
 
     # img_name = os.path.join(result_ann_dir, f"{os.path.splitext(img_filename)[0]}.xml")
-    img_name = f"{get_file_name(img_filename)}.xml"
-    ann_path = os.path.join(result_ann_dir, img_name)
+    ann_name = f"{get_file_name(img_filename)}.xml"
+    ann_path = os.path.join(result_ann_dir, ann_name)
     ET.indent(tree, space="    ")
     tree.write(ann_path, pretty_print=True)
 

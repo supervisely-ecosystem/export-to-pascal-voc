@@ -8,4 +8,7 @@
                description="Split Images to 'train' and 'val' datasets with the given coefficient. By default split size is set to 0.8, it means that 80% of data will be placed to 'train' dataset. If set to 0, all images will be placed to 'val' dataset.">
         <el-slider v-model="state.trainSplitCoef" :min="0" :max="1" :step="0.1" show-input></el-slider>
     </sly-field>
+    <sly-field>
+        <el-checkbox class="ml10 mt10" v-model="state.addPrefixToImages">Add the `dataset_id` prefix to image names (useful if you have the same image names in different datasets)</el-checkbox>
+    </sly-field>
 </div>

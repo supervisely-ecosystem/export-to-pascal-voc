@@ -7,6 +7,7 @@ import globals as g
 import utils
 
 
+@sly.handle_exceptions(has_ui=False)
 def from_sly_to_pascal(api: sly.Api):
     project_info = api.project.get_info_by_id(g.project_id)
     meta_json = api.project.get_meta(g.project_id)
@@ -49,17 +50,35 @@ def from_sly_to_pascal(api: sly.Api):
         images = api.image.get_list(dataset.id)
         for batch in sly.batched(images):
             image_ids = [image_info.id for image_info in batch]
-            image_paths = [
-                os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
-                for image_info in batch
-            ]
+            if g.ADD_PREFIX_TO_IMAGES:
+                image_paths = [
+                    os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
+                    for image_info in batch
+                ]
+            else:
+                image_paths = [
+                    os.path.join(result_images_dir, image_info.name) for image_info in batch
+                ]
+
+                for idx, path in enumerate(image_paths):
+                    if os.path.exists(path):
+                        img_name = os.path.basename(path)
+                        name, ext = os.path.splitext(img_name)
+                        i = 1
+                        new_name = f"{name}_{i}{ext}"
+                        while os.path.exists(os.path.join(result_images_dir, new_name)):
+                            i += 1
+                            new_name = f"{name}_{i}{ext}"
+                        sly.logger.warn(
+                            f"Image {img_name} already exists in the directory. New name: {new_name}"
+                        )
+                        image_paths[idx] = os.path.join(result_images_dir, new_name)
 
             api.image.download_paths(dataset.id, image_ids, image_paths)
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
-            for image_info, ann_info in zip(batch, ann_infos):
-                img_title, img_ext = os.path.splitext(image_info.name)
-                img_title = f"{dataset.id}_{img_title}"
-                cur_img_filename = image_info.name
+            for image_info, ann_info, img_path in zip(batch, ann_infos, image_paths):
+                cur_img_filename = os.path.basename(img_path)
+                img_title, img_ext = os.path.splitext(cur_img_filename)
 
                 if is_trainval == 1:
                     cur_img_stats = {"classes": set(), "dataset": dataset.name, "name": img_title}
@@ -69,14 +88,13 @@ def from_sly_to_pascal(api: sly.Api):
                     images_stats.append(cur_img_stats)
 
                 if img_ext not in g.VALID_IMG_EXT:
-                    orig_image_path = os.path.join(result_images_dir, cur_img_filename)
 
                     jpg_image = f"{img_title}.jpg"
                     jpg_image_path = os.path.join(result_images_dir, jpg_image)
 
-                    im = sly.image.read(orig_image_path)
+                    im = sly.image.read(img_path)
                     sly.image.write(jpg_image_path, im)
-                    sly.fs.silent_remove(orig_image_path)
+                    sly.fs.silent_remove(img_path)
 
                 ann = sly.Annotation.from_json(ann_info.annotation, meta)
                 tag = utils.find_first_tag(ann.img_tags, g.SPLIT_TAGS)

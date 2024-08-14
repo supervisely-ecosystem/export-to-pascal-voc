@@ -4,6 +4,7 @@ from collections import OrderedDict
 import supervisely as sly
 
 import globals as g
+import workflow as w
 import utils
 
 
@@ -13,6 +14,8 @@ def from_sly_to_pascal(api: sly.Api):
     meta_json = api.project.get_meta(g.project_id)
     meta = sly.ProjectMeta.from_json(meta_json)
     sly.logger.info("Palette has been created")
+
+    w.workflow_input(api, project_info.id)
 
     full_result_dir_name = f"{str(project_info.id)}_{project_info.name}{g.RESULT_DIR_NAME_ENDING}"
 
@@ -156,7 +159,9 @@ def from_sly_to_pascal(api: sly.Api):
     utils.write_segm_set(is_trainval, images_stats, result_imgsets_dir)
     utils.write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)
 
-    sly.output.set_download(result_dir)
+    file_info = sly.output.set_download(result_dir)
+
+    w.workflow_output(api, file_info)
 
 
 if __name__ == "__main__":

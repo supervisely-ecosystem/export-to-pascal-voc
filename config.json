@@ -1,10 +1,13 @@
 {
   "name": "Export to Pascal VOC",
   "type": "app",
-  "categories": ["images", "export"],
+  "categories": [
+    "images",
+    "export"
+  ],
   "description": "Converts Supervisely Project to Pascal VOC format",
-  "docker_image": "supervisely/import-export:6.73.157",
-  "instance_version": "6.10.0",
+  "docker_image": "supervisely/import-export:6.73.160",
+  "instance_version": "6.11.8",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
@@ -17,7 +20,9 @@
   "icon_background": "#FFFFFF",
   "headless": true,
   "context_menu": {
-    "target": ["images_project"],
+    "target": [
+      "images_project"
+    ],
     "context_root": "Download as"
   },
   "poster": "https://user-images.githubusercontent.com/48245050/182382862-d74f1b2c-b19e-47c2-84db-45cd934ec34e.png"

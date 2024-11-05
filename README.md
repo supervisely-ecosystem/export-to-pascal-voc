@@ -10,15 +10,15 @@
   <a href="#How-To-Use">How To Use</a>
 </p>
 
-[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervise.ly/slack)
+[![](https://img.shields.io/badge/slack-chat-green.svg?logo=slack)](https://supervisely.com/slack)
 ![GitHub release (latest SemVer)](https://img.shields.io/github/v/release/supervisely-ecosystem/export-to-pascal-voc)
-[![views](https://app.supervise.ly/img/badges/views/supervisely-ecosystem/export-to-pascal-voc.png)](https://supervise.ly)
-[![runs](https://app.supervise.ly/img/badges/runs/supervisely-ecosystem/export-to-pascal-voc.png)](https://supervise.ly)
+[![views](https://app.supervisely.com/img/badges/views/supervisely-ecosystem/export-to-pascal-voc.png)](https://supervisely.com)
+[![runs](https://app.supervisely.com/img/badges/runs/supervisely-ecosystem/export-to-pascal-voc.png)](https://supervisely.com)
 
 </div>
 
 ## Overview
-Converts [Supervisely](https://docs.supervise.ly/data-organization/00_ann_format_navi) format project to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.
+Converts [Supervisely](https://docs.supervisely.com/data-organization/00_ann_format_navi) format project to [Pascal VOC](http://host.robots.ox.ac.uk/pascal/VOC/) and prepares downloadable `tar` archive.
 
 
 ## Preparation
@@ -41,7 +41,7 @@ Pascal VOC format stores all data in separate folders. Image classes bounding bo
   * colors.txt (not original Pascal VOC format file)
 
 
-In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 80% for training and 20% for validation. You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervise.ly/apps/tag-train-val-test).
+In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 80% for training and 20% for validation. You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervisely.com/apps/tag-train-val-test).
 
 **`colors.txt`** file is custom, and not provided in the original Pascal VOC Dataset. File contains information about instance mask colors associated with classes in Pascal VOC Project. This file is required by Supervisely Pascal VOC import plugin, if you are uploading custom dataset in Pascal VOC format.
 
@@ -117,7 +117,7 @@ def from_ann_to_instance_mask(ann, mask_outpath):
 ``` 
 
 ## How To Run 
-**Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervise.ly/apps/export-to-pascal-voc) if it is not there.
+**Step 1**: Add app to your team from [Ecosystem](https://ecosystem.supervisely.com/apps/export-to-pascal-voc) if it is not there.
 
 **Step 2**: Open context menu of project -> `Download via App` -> `Export to Pascal VOC` 
 

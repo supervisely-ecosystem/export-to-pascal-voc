@@ -41,12 +41,15 @@ def from_sly_to_pascal(api: sly.Api):
 
     if g.dataset_id is None:
         datasets = api.dataset.get_list(g.project_id, recursive=True)
+        total_images_cnt = api.project.get_images_count(g.project_id)
     else:
-        datasets = [api.dataset.get_info_by_id(g.dataset_id)]
-        
+        ds_info = api.dataset.get_info_by_id(g.dataset_id)
+        datasets = [ds_info]
+        total_images_cnt = ds_info.items_count
+
     dataset_names = ["trainval", "val", "train"]
     progress = sly.Progress(
-        "Preparing images for export", api.project.get_images_count(g.project_id), sly.logger
+        "Preparing images for export", total_images_cnt, sly.logger
     )
     for dataset in datasets:
         if dataset.name in dataset_names:

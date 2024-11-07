@@ -20,6 +20,7 @@ sly.fs.mkdir(DATA_DIR, remove_content_if_exists=True)
 team_id = sly.env.team_id()
 workspace_id = sly.env.workspace_id()
 project_id = sly.env.project_id()
+dataset_id = sly.env.dataset_id(raise_not_found=False)
 
 PASCAL_CONTOUR_THICKNESS = int(os.environ["modal.state.pascalContourThickness"])
 TRAIN_VAL_SPLIT_COEF = float(os.environ["modal.state.trainSplitCoef"])

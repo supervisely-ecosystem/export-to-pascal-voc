@@ -7,6 +7,8 @@ import globals as g
 import workflow as w
 import utils
 
+import asyncio
+from tinytimer import Timer
 
 @sly.handle_exceptions(has_ui=False)
 def from_sly_to_pascal(api: sly.Api):
@@ -51,6 +53,12 @@ def from_sly_to_pascal(api: sly.Api):
     progress = sly.Progress(
         "Preparing images for export", total_images_cnt, sly.logger
     )
+
+    if api.server_address.startswith("https://"):
+        semaphore = asyncio.Semaphore(100)
+    else:
+        semaphore = None
+
     for dataset in datasets:
         if dataset.name in dataset_names:
             is_trainval = 1
@@ -58,33 +66,45 @@ def from_sly_to_pascal(api: sly.Api):
             is_trainval = 0
 
         images = api.image.get_list(dataset.id)
-        for batch in sly.batched(images):
-            image_ids = [image_info.id for image_info in batch]
-            if g.ADD_PREFIX_TO_IMAGES:
-                image_paths = [
-                    os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
-                    for image_info in batch
-                ]
-            else:
-                image_paths = [
-                    os.path.join(result_images_dir, image_info.name) for image_info in batch
-                ]
+        image_ids = [image_info.id for image_info in images]
 
-                for idx, path in enumerate(image_paths):
-                    if os.path.exists(path):
-                        img_name = os.path.basename(path)
-                        name, ext = os.path.splitext(img_name)
-                        i = 1
+        if g.ADD_PREFIX_TO_IMAGES:
+            image_paths = [
+                os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
+                for image_info in images
+            ]
+        else:
+            image_paths = [
+                os.path.join(result_images_dir, image_info.name) for image_info in images
+            ]
+            for idx, path in enumerate(image_paths):
+                if os.path.exists(path):
+                    img_name = os.path.basename(path)
+                    name, ext = os.path.splitext(img_name)
+                    i = 1
+                    new_name = f"{name}_{i}{ext}"
+                    while os.path.exists(os.path.join(result_images_dir, new_name)):
+                        i += 1
                         new_name = f"{name}_{i}{ext}"
-                        while os.path.exists(os.path.join(result_images_dir, new_name)):
-                            i += 1
-                            new_name = f"{name}_{i}{ext}"
-                        sly.logger.warn(
-                            f"Image {img_name} already exists in the directory. New name: {new_name}"
-                        )
-                        image_paths[idx] = os.path.join(result_images_dir, new_name)
+                    sly.logger.warn(
+                        f"Image {img_name} already exists in the directory. New name: {new_name}"
+                    )
+                    image_paths[idx] = os.path.join(result_images_dir, new_name)
 
-            api.image.download_paths(dataset.id, image_ids, image_paths)
+        with Timer() as t:
+            coro = api.image.download_paths_async(image_ids, image_paths, semaphore)
+            loop = sly.utils.get_or_create_event_loop()
+            if loop.is_running():
+                future = asyncio.run_coroutine_threadsafe(coro, loop)
+                future.result()
+            else:
+                loop.run_until_complete(coro)
+        sly.logger.info(
+            f"Downloading time: {t.elapsed:.4f} seconds per {len(image_ids)} images  ({t.elapsed/len(image_ids):.4f} seconds per image)"
+        )
+
+        for batch in sly.batched(images):
+            # api.image.download_paths(dataset.id, image_ids, image_paths)
             ann_infos = api.annotation.download_batch(dataset.id, image_ids)
             for image_info, ann_info, img_path in zip(batch, ann_infos, image_paths):
                 cur_img_filename = os.path.basename(img_path)

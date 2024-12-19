@@ -1,9 +1,8 @@
 import os
+from distutils.util import strtobool
 
 import supervisely as sly
 from dotenv import load_dotenv
-from distutils.util import strtobool
-import time
 
 if sly.is_development():
     load_dotenv("local.env")
@@ -57,23 +56,3 @@ if TRAIN_VAL_SPLIT_COEF > 1 or TRAIN_VAL_SPLIT_COEF < 0:
     raise ValueError(
         f"train_val_split_coef should be between 0 and 1, your data is {TRAIN_VAL_SPLIT_COEF}"
     )
-
-class Timer:
-    def __init__(self, message=None, items_cnt=None):
-        self.message = message
-        self.items_cnt = items_cnt
-        self.elapsed = 0
-
-    def __enter__(self):
-        self.start = time.perf_counter()
-        return self
-
-    def __exit__(self, exc_type, exc_val, exc_tb):
-        self.end = time.perf_counter()
-        self.elapsed = self.end - self.start
-        msg = self.message or "Block execution"
-        if self.items_cnt is not None:
-            log_msg = f"{msg} time: {self.elapsed:.3f} seconds per {self.items_cnt} items  ({self.elapsed/self.items_cnt:.3f} seconds per item)"
-        else:
-            log_msg = f"{msg} time: {self.elapsed:.3f} seconds"
-        sly.logger.info(log_msg)

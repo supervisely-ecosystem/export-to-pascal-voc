@@ -1,13 +1,13 @@
+import asyncio
 import os
 from collections import OrderedDict
 
 import supervisely as sly
 
 import globals as g
-import workflow as w
 import utils
+import workflow as w
 
-import asyncio
 
 @sly.handle_exceptions(has_ui=False)
 def from_sly_to_pascal(api: sly.Api):
@@ -49,116 +49,115 @@ def from_sly_to_pascal(api: sly.Api):
         total_images_cnt = ds_info.items_count
 
     dataset_names = ["trainval", "val", "train"]
-    progress = sly.Progress(
-        "Preparing images for export", total_images_cnt, sly.logger
-    )
-
+    progress = sly.tqdm_sly(desc="Preparing images for export", total=total_images_cnt)
     for dataset in datasets:
+        sly.logger.info(f"Processing dataset: {dataset.name}")
         if dataset.name in dataset_names:
             is_trainval = 1
         else:
             is_trainval = 0
 
         images = api.image.get_list(dataset.id)
-        for batch in sly.batched(images):
-            image_ids = [image_info.id for image_info in batch]
+        image_ids = [image_info.id for image_info in images]
 
-            if g.ADD_PREFIX_TO_IMAGES:
-                image_paths = [
-                    os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
-                    for image_info in images
-                ]
-            else:
-                image_paths = [
-                    os.path.join(result_images_dir, image_info.name) for image_info in images
-                ]
-                for idx, path in enumerate(image_paths):
-                    if os.path.exists(path):
-                        img_name = os.path.basename(path)
-                        name, ext = os.path.splitext(img_name)
-                        i = 1
+        if g.ADD_PREFIX_TO_IMAGES:
+            image_paths = [
+                os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
+                for image_info in images
+            ]
+        else:
+            image_paths = [
+                os.path.join(result_images_dir, image_info.name) for image_info in images
+            ]
+            for idx, path in enumerate(image_paths):
+                if os.path.exists(path):
+                    img_name = os.path.basename(path)
+                    name, ext = os.path.splitext(img_name)
+                    i = 1
+                    new_name = f"{name}_{i}{ext}"
+                    while os.path.exists(os.path.join(result_images_dir, new_name)):
+                        i += 1
                         new_name = f"{name}_{i}{ext}"
-                        while os.path.exists(os.path.join(result_images_dir, new_name)):
-                            i += 1
-                            new_name = f"{name}_{i}{ext}"
-                        sly.logger.warn(
-                            f"Image {img_name} already exists in the directory. New name: {new_name}"
-                        )
-                        image_paths[idx] = os.path.join(result_images_dir, new_name)
+                    sly.logger.warning(
+                        f"Image {img_name} already exists in the directory. New name: {new_name}"
+                    )
+                    image_paths[idx] = os.path.join(result_images_dir, new_name)
 
-            with g.Timer("Image downloading", len(image_ids)):
-                coro = api.image.download_paths_async(image_ids, image_paths)
-                loop = sly.utils.get_or_create_event_loop()
-                if loop.is_running():
-                    future = asyncio.run_coroutine_threadsafe(coro, loop)
-                    future.result()
+        di_progress = sly.tqdm_sly(
+            desc=f"Downloading images from {dataset.name}", total=len(images)
+        )
+        coro = api.image.download_paths_async(image_ids, image_paths, progress_cb=di_progress)
+        loop = sly.utils.get_or_create_event_loop()
+        if loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            future.result()
+        else:
+            loop.run_until_complete(coro)
+
+        da_progress = sly.tqdm_sly(
+            desc=f"Downloading annotations from {dataset.name}", total=len(images)
+        )
+        coro = api.annotation.download_batch_async(dataset.id, image_ids, progress_cb=da_progress)
+        loop = sly.utils.get_or_create_event_loop()
+        if loop.is_running():
+            future = asyncio.run_coroutine_threadsafe(coro, loop)
+            ann_infos = future.result()
+        else:
+            ann_infos = loop.run_until_complete(coro)
+
+        for image_info, ann_info, img_path in zip(images, ann_infos, image_paths):
+            cur_img_filename = os.path.basename(img_path)
+            img_title, img_ext = os.path.splitext(cur_img_filename)
+
+            if is_trainval == 1:
+                cur_img_stats = {"classes": set(), "dataset": dataset.name, "name": img_title}
+                images_stats.append(cur_img_stats)
+            else:
+                cur_img_stats = {"classes": set(), "dataset": None, "name": img_title}
+                images_stats.append(cur_img_stats)
+
+            if img_ext not in g.VALID_IMG_EXT:
+
+                jpg_image = f"{img_title}.jpg"
+                jpg_image_path = os.path.join(result_images_dir, jpg_image)
+
+                im = sly.image.read(img_path)
+                sly.image.write(jpg_image_path, im)
+                sly.fs.silent_remove(img_path)
+
+            ann = sly.Annotation.from_json(ann_info.annotation, meta)
+            tag = utils.find_first_tag(ann.img_tags, g.SPLIT_TAGS)
+            if tag is not None:
+                cur_img_stats["dataset"] = tag.meta.name
+
+            valid_labels = []
+            for label in ann.labels:
+                if type(label.geometry) in g.SUPPORTED_GEOMETRY_TYPES:
+                    valid_labels.append(label)
                 else:
-                    loop.run_until_complete(coro)
-                    
-            ann_infos = []
-            with g.Timer("Annotation downloading", len(image_ids)):
-                coro = api.annotation.download_batch_async(dataset.id, image_ids)
-                loop = sly.utils.get_or_create_event_loop()
-                if loop.is_running():
-                    future = asyncio.run_coroutine_threadsafe(coro, loop)
-                    ann_infos.extend(future.result())
-                else:
-                    ann_infos.extend(loop.run_until_complete(coro))
-                    
-            for image_info, ann_info, img_path in zip(batch, ann_infos, image_paths):
-                cur_img_filename = os.path.basename(img_path)
-                img_title, img_ext = os.path.splitext(cur_img_filename)
+                    sly.logger.warning(
+                        f"Label has unsupported geometry type ({type(label.geometry)}) and will be skipped."
+                    )
 
-                if is_trainval == 1:
-                    cur_img_stats = {"classes": set(), "dataset": dataset.name, "name": img_title}
-                    images_stats.append(cur_img_stats)
-                else:
-                    cur_img_stats = {"classes": set(), "dataset": None, "name": img_title}
-                    images_stats.append(cur_img_stats)
+            ann = ann.clone(labels=valid_labels)
+            utils.ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
+            for label in ann.labels:
+                cur_img_stats["classes"].add(label.obj_class.name)
+                classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
 
-                if img_ext not in g.VALID_IMG_EXT:
+            fake_contour_th = 0
+            if g.PASCAL_CONTOUR_THICKNESS != 0:
+                fake_contour_th = 2 * g.PASCAL_CONTOUR_THICKNESS + 1
 
-                    jpg_image = f"{img_title}.jpg"
-                    jpg_image_path = os.path.join(result_images_dir, jpg_image)
-
-                    im = sly.image.read(img_path)
-                    sly.image.write(jpg_image_path, im)
-                    sly.fs.silent_remove(img_path)
-
-                ann = sly.Annotation.from_json(ann_info.annotation, meta)
-                tag = utils.find_first_tag(ann.img_tags, g.SPLIT_TAGS)
-                if tag is not None:
-                    cur_img_stats["dataset"] = tag.meta.name
-
-                valid_labels = []
-                for label in ann.labels:
-                    if type(label.geometry) in g.SUPPORTED_GEOMETRY_TYPES:
-                        valid_labels.append(label)
-                    else:
-                        sly.logger.warn(
-                            f"Label has unsupported geometry type ({type(label.geometry)}) and will be skipped."
-                        )
-
-                ann = ann.clone(labels=valid_labels)
-                utils.ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
-                for label in ann.labels:
-                    cur_img_stats["classes"].add(label.obj_class.name)
-                    classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
-
-                fake_contour_th = 0
-                if g.PASCAL_CONTOUR_THICKNESS != 0:
-                    fake_contour_th = 2 * g.PASCAL_CONTOUR_THICKNESS + 1
-
-                utils.from_ann_to_instance_mask(
-                    ann,
-                    os.path.join(result_class_dir_name, img_title + g.pascal_ann_ext),
-                    fake_contour_th,
-                )
-                utils.from_ann_to_class_mask(
-                    ann, os.path.join(result_obj_dir, img_title + g.pascal_ann_ext), fake_contour_th
-                )
-
-                progress.iter_done_report()
+            utils.from_ann_to_instance_mask(
+                ann,
+                os.path.join(result_class_dir_name, img_title + g.pascal_ann_ext),
+                fake_contour_th,
+            )
+            utils.from_ann_to_class_mask(
+                ann, os.path.join(result_obj_dir, img_title + g.pascal_ann_ext), fake_contour_th
+            )
+            progress(1)
 
     classes_colors = OrderedDict((sorted(classes_colors.items(), key=lambda t: t[0])))
 

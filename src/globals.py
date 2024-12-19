@@ -1,8 +1,8 @@
 import os
+from distutils.util import strtobool
 
 import supervisely as sly
 from dotenv import load_dotenv
-from distutils.util import strtobool
 
 if sly.is_development():
     load_dotenv("local.env")

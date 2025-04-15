@@ -50,8 +50,8 @@ def from_sly_to_pascal(api: sly.Api):
                 parent_to_children[parent_id].append(ds)
                 current = ds_id_to_info[parent_id]
         datasets = [ds_id_to_info.get(g.dataset_id)] + parent_to_children.get(g.dataset_id, [])
-        _ds_names = [ds.name for ds in datasets]
         if len(datasets) > 1:
+            _ds_names = [ds.name for ds in datasets]
             sly.logger.debug("Aggregated datasets: %s", _ds_names)
     total_images_cnt = sum(info.images_count for info in datasets)
 

@@ -40,13 +40,20 @@ def from_sly_to_pascal(api: sly.Api):
     images_stats = []
     classes_colors = {}
 
-    if g.dataset_id is None:
-        datasets = api.dataset.get_list(g.project_id, recursive=True)
-        total_images_cnt = api.project.get_images_count(g.project_id)
-    else:
-        ds_info = api.dataset.get_info_by_id(g.dataset_id)
-        datasets = [ds_info]
-        total_images_cnt = ds_info.items_count
+    datasets = api.dataset.get_list(g.project_id, recursive=True)
+    if g.dataset_id is not None:
+        ds_id_to_info = {ds.id: ds for ds in datasets}
+        parent_to_children = {ds.id: [] for ds in datasets}
+        for ds in datasets:
+            current = ds
+            while parent_id := current.parent_id:
+                parent_to_children[parent_id].append(ds)
+                current = ds_id_to_info[parent_id]
+        datasets = [ds_id_to_info.get(g.dataset_id)] + parent_to_children.get(g.dataset_id, [])
+        if len(datasets) > 1:
+            _ds_names = [ds.name for ds in datasets]
+            sly.logger.debug("Aggregated datasets: %s", _ds_names)
+    total_images_cnt = sum(info.images_count for info in datasets)
 
     dataset_names = ["trainval", "val", "train"]
     progress = sly.tqdm_sly(desc="Preparing images for export", total=total_images_cnt)

@@ -1,10 +1,12 @@
 import os
+from shutil import copyfile
 from typing import List
-import numpy as np
+
 import lxml.etree as ET
+import numpy as np
 import supervisely as sly
 from PIL import Image
-from shutil import copyfile
+from supervisely._utils import remove_non_printable
 from supervisely.imaging.color import generate_rgb
 from supervisely.io.fs import get_file_name
 
@@ -33,10 +35,11 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     exist_colors = [[0, 0, 0], g.pascal_contour_color]
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
+        class_name = remove_non_printable(label.obj_class.name)
         if label.obj_class.geometry_type == sly.Rectangle:
             continue
 
-        if label.obj_class.name == "neutral":
+        if class_name == "neutral":
             label.geometry.draw(mask, g.pascal_contour_color)
             continue
 
@@ -57,9 +60,9 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
     ET.SubElement(xml_root, "filename").text = img_filename
 
     xml_root_source = ET.SubElement(xml_root, "source")
-    ET.SubElement(
-        xml_root_source, "database"
-    ).text = f"Supervisely Project ID:{str(project_info.id)}"
+    ET.SubElement(xml_root_source, "database").text = (
+        f"Supervisely Project ID:{str(project_info.id)}"
+    )
 
     ET.SubElement(xml_root_source, "annotation").text = "PASCAL VOC"
     ET.SubElement(xml_root_source, "image").text = f"Supervisely Image ID:{str(image_info.id)}"
@@ -72,13 +75,14 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
     ET.SubElement(xml_root, "segmented").text = "1" if len(ann.labels) > 0 else "0"
 
     for label in ann.labels:
-        if label.obj_class.name == "neutral":
+        class_name = remove_non_printable(label.obj_class.name)
+        if class_name == "neutral":
             continue
 
         bitmap_to_bbox = label.geometry.to_bbox()
 
         xml_ann_obj = ET.SubElement(xml_root, "object")
-        ET.SubElement(xml_ann_obj, "name").text = label.obj_class.name
+        ET.SubElement(xml_ann_obj, "name").text = class_name
         ET.SubElement(xml_ann_obj, "pose").text = "Unspecified"
         ET.SubElement(xml_ann_obj, "truncated").text = "0"
         ET.SubElement(xml_ann_obj, "difficult").text = "0"
@@ -136,14 +140,15 @@ def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
     for obj_cls in meta_json.obj_classes:
         if obj_cls.geometry_type not in g.SUPPORTED_GEOMETRY_TYPES:
             continue
-        if obj_cls.name == "neutral":
+        class_name = remove_non_printable(obj_cls.name)
+        if class_name == "neutral":
             continue
         for o in write_objs:
             with open(
-                os.path.join(result_imgsets_main_subdir, f'{obj_cls.name}_{o["suffix"]}.txt'), "w"
+                os.path.join(result_imgsets_main_subdir, f'{class_name}_{o["suffix"]}.txt'), "w"
             ) as f:
                 for img_stats in o["imgs"]:
-                    v = "1" if obj_cls.name in img_stats["classes"] else "-1"
+                    v = "1" if class_name in img_stats["classes"] else "-1"
                     f.write(f'{img_stats["name"]} {v}\n')
 
 

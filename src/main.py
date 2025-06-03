@@ -3,6 +3,7 @@ import os
 from collections import OrderedDict
 
 import supervisely as sly
+from supervisely._utils import remove_non_printable
 
 import globals as g
 import utils
@@ -55,14 +56,10 @@ def from_sly_to_pascal(api: sly.Api):
             sly.logger.debug("Aggregated datasets: %s", _ds_names)
     total_images_cnt = sum(info.images_count for info in datasets)
 
-    dataset_names = ["trainval", "val", "train"]
     progress = sly.tqdm_sly(desc="Preparing images for export", total=total_images_cnt)
     for dataset in datasets:
         sly.logger.info(f"Processing dataset: {dataset.name}")
-        if dataset.name in dataset_names:
-            is_trainval = 1
-        else:
-            is_trainval = 0
+        is_trainval = int(dataset.name in ["trainval", "val", "train"])
 
         images = api.image.get_list(dataset.id)
         image_ids = [image_info.id for image_info in images]
@@ -116,15 +113,14 @@ def from_sly_to_pascal(api: sly.Api):
             cur_img_filename = os.path.basename(img_path)
             img_title, img_ext = os.path.splitext(cur_img_filename)
 
-            if is_trainval == 1:
-                cur_img_stats = {"classes": set(), "dataset": dataset.name, "name": img_title}
-                images_stats.append(cur_img_stats)
-            else:
-                cur_img_stats = {"classes": set(), "dataset": None, "name": img_title}
-                images_stats.append(cur_img_stats)
+            cur_img_stats = {
+                "classes": set(),
+                "dataset": dataset.name if is_trainval == 1 else None,
+                "name": img_title,
+            }
+            images_stats.append(cur_img_stats)
 
             if img_ext not in g.VALID_IMG_EXT:
-
                 jpg_image = f"{img_title}.jpg"
                 jpg_image_path = os.path.join(result_images_dir, jpg_image)
 
@@ -149,8 +145,9 @@ def from_sly_to_pascal(api: sly.Api):
             ann = ann.clone(labels=valid_labels)
             utils.ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
             for label in ann.labels:
-                cur_img_stats["classes"].add(label.obj_class.name)
-                classes_colors[label.obj_class.name] = tuple(label.obj_class.color)
+                sanitized_class_name = remove_non_printable(label.obj_class.name)
+                cur_img_stats["classes"].add(sanitized_class_name)
+                classes_colors[sanitized_class_name] = tuple(label.obj_class.color)
 
             fake_contour_th = 0
             if g.PASCAL_CONTOUR_THICKNESS != 0:
@@ -175,6 +172,7 @@ def from_sly_to_pascal(api: sly.Api):
             )
 
         for k in classes_colors.keys():
+            k = remove_non_printable(k)
             if k == "neutral":
                 continue
 

@@ -53,7 +53,13 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     im.save(mask_outpath)
 
 
-def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
+def ann_to_xml(
+    project_info: sly.ProjectInfo,
+    image_info: sly.ImageInfo,
+    img_filename: str,
+    result_ann_dir: str,
+    ann: sly.Annotation,
+):
     xml_root = ET.Element("annotation")
 
     ET.SubElement(xml_root, "folder").text = f"VOC_{project_info.name}"
@@ -83,9 +89,16 @@ def ann_to_xml(project_info, image_info, img_filename, result_ann_dir, ann):
 
         xml_ann_obj = ET.SubElement(xml_root, "object")
         ET.SubElement(xml_ann_obj, "name").text = class_name
-        ET.SubElement(xml_ann_obj, "pose").text = "Unspecified"
-        ET.SubElement(xml_ann_obj, "truncated").text = "0"
-        ET.SubElement(xml_ann_obj, "difficult").text = "0"
+
+        tag_names = [tag.name for tag in label.tags]
+        has_default_tags = all([t in tag_names for t in ["pose", "truncated", "difficult"]])
+        if not has_default_tags:
+            ET.SubElement(xml_ann_obj, "pose").text = "Unspecified"
+            ET.SubElement(xml_ann_obj, "truncated").text = "0"
+            ET.SubElement(xml_ann_obj, "difficult").text = "0"
+        else:
+            for tag in label.tags:
+                ET.SubElement(xml_ann_obj, tag.name).text = str(tag.value)
 
         xml_ann_obj_bndbox = ET.SubElement(xml_ann_obj, "bndbox")
         ET.SubElement(xml_ann_obj_bndbox, "xmin").text = str(bitmap_to_bbox.left)

@@ -143,6 +143,12 @@ def from_sly_to_pascal(api: sly.Api):
                     )
 
             ann = ann.clone(labels=valid_labels)
+
+            tag_meta_names = meta.tag_metas.keys()
+            keys_to_keep = set(utils.other_subclasses.keys()).intersection(set(tag_meta_names))
+            other_subclasses_to_keep = {k: utils.other_subclasses[k] for k in keys_to_keep}
+            utils.DEFAULT_SUBCLASSES.update(other_subclasses_to_keep)
+
             utils.ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
             for label in ann.labels:
                 sanitized_class_name = remove_non_printable(label.obj_class.name)

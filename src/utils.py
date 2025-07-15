@@ -12,6 +12,18 @@ from supervisely.io.fs import get_file_name
 
 import globals as g
 
+DEFAULT_SUBCLASSES = {
+    "pose": "Unspecified",
+    "truncated": "0",
+    "difficult": "0",
+}
+other_subclasses = {
+    "occluded": "0",
+    "obstacle": "0",
+    "out-of-scope": "0",
+    "crowd": "0",
+}
+
 
 def from_ann_to_instance_mask(ann: sly.Annotation, mask_outpath, contour_thickness):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
@@ -90,13 +102,13 @@ def ann_to_xml(
         xml_ann_obj = ET.SubElement(xml_root, "object")
         ET.SubElement(xml_ann_obj, "name").text = class_name
 
-        tag_names = [tag.name for tag in label.tags.items()]
-        default_tags = {"pose": "Unspecified", "truncated": "0", "difficult": "0"}
-        for tag_name, tag_value in default_tags.items():
-            if tag_name not in tag_names:
-                ET.SubElement(xml_ann_obj, tag_name).text = tag_value
+        for tag_name, tag_value in DEFAULT_SUBCLASSES.items():
+            ET.SubElement(xml_ann_obj, tag_name).text = tag_value
 
         for tag in label.tags:
+            if tag.value_type == sly.TagValueType.NONE:
+                ET.SubElement(xml_ann_obj, tag.name).text = "1"
+                continue
             ET.SubElement(xml_ann_obj, tag.name).text = str(tag.value)
 
         xml_ann_obj_bndbox = ET.SubElement(xml_ann_obj, "bndbox")

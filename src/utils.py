@@ -106,7 +106,7 @@ def ann_to_xml(
             ET.SubElement(xml_ann_obj, tag_name).text = tag_value
 
         for tag in label.tags:
-            if tag.value_type == sly.TagValueType.NONE:
+            if tag.value is None:
                 ET.SubElement(xml_ann_obj, tag.name).text = "1"
                 continue
             ET.SubElement(xml_ann_obj, tag.name).text = str(tag.value)

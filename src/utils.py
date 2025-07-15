@@ -7,7 +7,6 @@ import numpy as np
 import supervisely as sly
 from PIL import Image
 from supervisely._utils import remove_non_printable
-from supervisely.convert.image.pascal_voc import pascal_voc_helper as helper
 from supervisely.imaging.color import generate_rgb
 from supervisely.io.fs import get_file_name
 
@@ -92,9 +91,7 @@ def ann_to_xml(
         ET.SubElement(xml_ann_obj, "name").text = class_name
 
         tag_names = [tag.name for tag in label.tags.items()]
-        default_tags = {"pose": "Unspecified"}.update(
-            {k: "0" for k in ["truncated", "difficult", "occluded", "obstacle", "out-of-scope"]}
-        )
+        default_tags = {"pose": "Unspecified", "truncated": "0", "difficult": "0"}
         for tag_name, tag_value in default_tags.items():
             if tag_name not in tag_names:
                 ET.SubElement(xml_ann_obj, tag_name).text = tag_value

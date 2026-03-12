@@ -1,5 +1,4 @@
 import os
-from distutils.util import strtobool
 
 import supervisely as sly
 from dotenv import load_dotenv
@@ -24,7 +23,7 @@ dataset_id = sly.env.dataset_id(raise_not_found=False)
 
 PASCAL_CONTOUR_THICKNESS = int(os.environ["modal.state.pascalContourThickness"])
 TRAIN_VAL_SPLIT_COEF = float(os.environ["modal.state.trainSplitCoef"])
-ADD_PREFIX_TO_IMAGES = bool(strtobool(os.environ.get("modal.state.addPrefixToImages", "true")))
+ADD_PREFIX_TO_IMAGES = (os.environ.get("modal.state.addPrefixToImages", "true")).lower() == "true"
 # endregion
 
 

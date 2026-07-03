@@ -41,6 +41,37 @@ Pascal VOC format stores all data in separate folders. Image classes bounding bo
   * colors.txt (not original Pascal VOC format file)
 
 
+#### Preserve Nested Dataset Structure (optional)
+
+By default the app flattens all datasets (including nested ones) into the standard Pascal VOC layout shown above. If your project uses nested datasets and you want to keep the hierarchy, enable the `Preserve nested dataset structure` option in the app modal. In this mode `JPEGImages`, `Annotations`, `SegmentationClass` and `SegmentationObject` mirror the dataset hierarchy as nested subfolders:
+
+```
+Voc
+├── JPEGImages
+│   ├── category_a
+│   │   ├── img_001.jpg              ← images that belong directly to category_a
+│   │   └── subcategory_a1
+│   │       └── img_002.jpg
+│   └── category_b                   ← a dataset level may contain no images at all,
+│       └── subcategory_b1           ← only nested datasets
+│           └── img_003.jpg
+├── Annotations
+│   └── category_a
+│       ├── img_001.xml
+│       └── subcategory_a1
+│           └── img_002.xml
+├── SegmentationClass                ← same nested structure
+├── SegmentationObject               ← same nested structure
+├── ImageSets                        ← entries are relative paths, e.g. category_a/subcategory_a1/img_002
+└── colors.txt
+```
+
+Notes for the nested mode:
+
+* Original image names are preserved — each dataset has its own folder, so there are no name collisions and the `Add Prefix to Images` option is ignored.
+* `ImageSets` lists contain relative paths instead of bare image names. Classic list-driven VOC parsers (e.g. `torchvision.datasets.VOCDetection`) typically resolve such paths and load the entire dataset, but tools that scan `JPEGImages` non-recursively will not see the images. Compatibility with classic VOC tooling is only guaranteed for the standard (default) mode.
+* The [`Import Pascal VOC`](https://ecosystem.supervisely.com/apps/import-pascal-voc) app detects this layout automatically and recreates the same dataset hierarchy in Supervisely.
+
 In addition, Pascal VOC format implies the presence of train/val. If images doesn't have such tags, data will be splitted by default into 80% for training and 20% for validation. You can also assign corresponding tags (`train` or `val`) to images manually, or by using our app [`Assign train/val tags to images`](https://ecosystem.supervisely.com/apps/tag-train-val-test).
 
 **`colors.txt`** file is custom, and not provided in the original Pascal VOC Dataset. File contains information about instance mask colors associated with classes in Pascal VOC Project. This file is required by Supervisely Pascal VOC import plugin, if you are uploading custom dataset in Pascal VOC format.

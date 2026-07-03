@@ -10,7 +10,8 @@
   "modal_template_state": {
     "pascalContourThickness": 3,
     "trainSplitCoef": 0.8,
-    "addPrefixToImages": true
+    "addPrefixToImages": true,
+    "preserveNestedStructure": false
   },
   "task_location": "workspace_tasks",
   "icon": "https://i.imgur.com/zTseThz.png",

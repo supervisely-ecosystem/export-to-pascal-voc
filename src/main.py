@@ -56,6 +56,19 @@ def from_sly_to_pascal(api: sly.Api):
             sly.logger.debug("Aggregated datasets: %s", _ds_names)
     total_images_cnt = sum(info.images_count for info in datasets)
 
+    # Relative path of a dataset from the export root. When a specific dataset is
+    # selected, its ancestors are absent from the map, so the chain stops there and
+    # paths are relative to the selected dataset.
+    exported_ds_by_id = {ds.id: ds for ds in datasets}
+
+    def dataset_relpath(ds_info) -> str:
+        parts = []
+        current = ds_info
+        while current is not None:
+            parts.append(current.name)
+            current = exported_ds_by_id.get(current.parent_id)
+        return "/".join(reversed(parts))
+
     progress = sly.tqdm_sly(desc="Preparing images for export", total=total_images_cnt)
     for dataset in datasets:
         sly.logger.info(f"Processing dataset: {dataset.name}")
@@ -64,7 +77,30 @@ def from_sly_to_pascal(api: sly.Api):
         images = api.image.get_list(dataset.id)
         image_ids = [image_info.id for image_info in images]
 
-        if g.ADD_PREFIX_TO_IMAGES:
+        if g.PRESERVE_NESTED_STRUCTURE:
+            ds_relpath = dataset_relpath(dataset)
+            ds_images_dir = os.path.join(result_images_dir, ds_relpath)
+            ds_ann_dir = os.path.join(result_ann_dir, ds_relpath)
+            ds_class_dir = os.path.join(result_class_dir_name, ds_relpath)
+            ds_obj_dir = os.path.join(result_obj_dir, ds_relpath)
+            # Directories are created even for image-less datasets so that empty
+            # hierarchy levels survive the round trip.
+            for ds_dir in (ds_images_dir, ds_ann_dir, ds_class_dir, ds_obj_dir):
+                sly.fs.mkdir(ds_dir)
+        else:
+            ds_relpath = ""
+            ds_images_dir = result_images_dir
+            ds_ann_dir = result_ann_dir
+            ds_class_dir = result_class_dir_name
+            ds_obj_dir = result_obj_dir
+
+        if g.PRESERVE_NESTED_STRUCTURE:
+            # Names within a single dataset are unique, and each dataset has its own
+            # folder, so no prefixes or deduplication are needed.
+            image_paths = [
+                os.path.join(ds_images_dir, image_info.name) for image_info in images
+            ]
+        elif g.ADD_PREFIX_TO_IMAGES:
             image_paths = [
                 os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
                 for image_info in images
@@ -116,13 +152,13 @@ def from_sly_to_pascal(api: sly.Api):
             cur_img_stats = {
                 "classes": set(),
                 "dataset": dataset.name if is_trainval == 1 else None,
-                "name": img_title,
+                "name": f"{ds_relpath}/{img_title}" if ds_relpath else img_title,
             }
             images_stats.append(cur_img_stats)
 
             if img_ext not in g.VALID_IMG_EXT:
                 jpg_image = f"{img_title}.jpg"
-                jpg_image_path = os.path.join(result_images_dir, jpg_image)
+                jpg_image_path = os.path.join(ds_images_dir, jpg_image)
 
                 im = sly.image.read(img_path)
                 sly.image.write(jpg_image_path, im)
@@ -149,7 +185,7 @@ def from_sly_to_pascal(api: sly.Api):
             other_subclasses_to_keep = {k: utils.other_subclasses[k] for k in keys_to_keep}
             utils.DEFAULT_SUBCLASSES.update(other_subclasses_to_keep)
 
-            utils.ann_to_xml(project_info, image_info, cur_img_filename, result_ann_dir, ann)
+            utils.ann_to_xml(project_info, image_info, cur_img_filename, ds_ann_dir, ann)
             for label in ann.labels:
                 sanitized_class_name = remove_non_printable(label.obj_class.name)
                 cur_img_stats["classes"].add(sanitized_class_name)
@@ -161,11 +197,11 @@ def from_sly_to_pascal(api: sly.Api):
 
             utils.from_ann_to_instance_mask(
                 ann,
-                os.path.join(result_class_dir_name, img_title + g.pascal_ann_ext),
+                os.path.join(ds_class_dir, img_title + g.pascal_ann_ext),
                 fake_contour_th,
             )
             utils.from_ann_to_class_mask(
-                ann, os.path.join(result_obj_dir, img_title + g.pascal_ann_ext), fake_contour_th
+                ann, os.path.join(ds_obj_dir, img_title + g.pascal_ann_ext), fake_contour_th
             )
             progress(1)
 

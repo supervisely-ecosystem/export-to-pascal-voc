@@ -3,14 +3,15 @@
   "type": "app",
   "categories": ["images", "export"],
   "description": "Converts Supervisely Project to Pascal VOC format",
-  "docker_image": "supervisely/export-to-pascal-voc:6.73.545",
-  "instance_version": "6.15.40",
+  "docker_image": "supervisely/export-to-pascal-voc:6.74.10",
+  "instance_version": "6.17.8",
   "main_script": "src/main.py",
   "modal_template": "src/modal.html",
   "modal_template_state": {
     "pascalContourThickness": 3,
     "trainSplitCoef": 0.8,
-    "addPrefixToImages": true
+    "addPrefixToImages": true,
+    "preserveNestedStructure": false
   },
   "task_location": "workspace_tasks",
   "icon": "https://i.imgur.com/zTseThz.png",

@@ -9,7 +9,11 @@
         <el-slider v-model="state.trainSplitCoef" :min="0" :max="1" :step="0.1" show-input></el-slider>
     </sly-field>
     <sly-field title="Add Prefix to Images"
-               description="Can be useful if you have several datasets with the same image names.">
+               description="Can be useful if you have several datasets with the same image names. Ignored when nested dataset structure is preserved.">
         <el-checkbox class="ml10 mt10" v-model="state.addPrefixToImages">Add the `dataset_id` prefix to image names</el-checkbox>
+    </sly-field>
+    <sly-field title="Preserve Nested Dataset Structure"
+               description="Mirror the dataset hierarchy as nested subfolders inside JPEGImages, Annotations, SegmentationClass and SegmentationObject. Original image names are kept. Note: the resulting layout is non-standard — classic VOC parsers that scan folders directly may not read it; ImageSets lists will contain relative paths.">
+        <el-checkbox class="ml10 mt10" v-model="state.preserveNestedStructure">Preserve nested dataset structure</el-checkbox>
     </sly-field>
 </div>

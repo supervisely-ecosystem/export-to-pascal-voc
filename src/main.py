@@ -164,6 +164,7 @@ def from_sly_to_pascal(api: sly.Api):
 
             valid_labels = []
             for label in ann.labels:
+                label = utils.alpha_mask_to_bitmap(label)
                 if type(label.geometry) in g.SUPPORTED_GEOMETRY_TYPES:
                     valid_labels.append(label)
                 else:

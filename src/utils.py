@@ -29,7 +29,7 @@ other_subclasses = {
 def from_ann_to_instance_mask(ann: sly.Annotation, mask_outpath, contour_thickness):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
-        if label.obj_class.geometry_type == sly.Rectangle:
+        if isinstance(label.geometry, sly.Rectangle):  # boxes are XML-only
             continue
 
         if label.obj_class.name == "neutral":
@@ -49,7 +49,7 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
         class_name = remove_non_printable(label.obj_class.name)
-        if label.obj_class.geometry_type == sly.Rectangle:
+        if isinstance(label.geometry, sly.Rectangle):  # boxes are XML-only
             continue
 
         if class_name == "neutral":
@@ -64,6 +64,14 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     im = Image.fromarray(mask)
     im = im.convert("P", palette=Image.ADAPTIVE)
     im.save(mask_outpath)
+
+
+def alpha_mask_to_bitmap(label: sly.Label) -> sly.Label:
+    """An AlphaMask label as a Bitmap of its pixels with alpha > 0; other labels unchanged."""
+    if not isinstance(label.geometry, sly.AlphaMask):
+        return label
+    bitmap = sly.Bitmap(label.geometry.data > 0, origin=label.geometry.origin)
+    return label.clone(geometry=bitmap, obj_class=label.obj_class.clone(geometry_type=sly.Bitmap))
 
 
 def xml_element_name(name: str) -> str:
@@ -178,7 +186,7 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
     ]
 
     for obj_cls in meta_json.obj_classes:
-        if obj_cls.geometry_type not in g.SUPPORTED_GEOMETRY_TYPES:
+        if obj_cls.geometry_type not in g.SUPPORTED_CLASS_TYPES:
             continue
         class_name = remove_non_printable(obj_cls.name)
         if class_name == "neutral":

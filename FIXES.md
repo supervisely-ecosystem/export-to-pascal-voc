@@ -146,3 +146,11 @@ Run each case on the branch and on the published version (drop `--version ... --
    workspace 733 with two datasets "train" and "val" and an object tag named "my tag".
    - Expected on the branch: trainval.txt holds all images and the XML has `<my_tag>`.
    - Published: empty trainval.txt, and the run fails with "Invalid tag name 'my tag'".
+
+## Branch image (test tag)
+
+On this branch `config.json` uses `supervisely/export-to-pascal-voc:test-2ec8ffe9`. `release_branch.yml` follows
+`workflows/templates/build_release_branch.yml`: on push it builds that tag, named by the sha256 of
+`dev_requirements.txt`, and only if the tag is not on Docker Hub yet. Dev agents pull images "if not present", so
+every dependency change gets a new tag. **Before merging, set `docker_image` back to `supervisely/export-to-pascal-voc:6.74.10-1`**; `release.yml`
+builds that tag on the version release.

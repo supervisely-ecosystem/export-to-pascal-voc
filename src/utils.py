@@ -1,4 +1,5 @@
 import os
+import re
 from shutil import copyfile
 from typing import List
 
@@ -65,6 +66,14 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     im.save(mask_outpath)
 
 
+def xml_element_name(name: str) -> str:
+    """A valid XML element name for a tag name: "my tag" -> "my_tag", "1st" -> "_1st"."""
+    element_name = re.sub(r"[^\w.\-]", "_", name)
+    if not element_name or not (element_name[0].isalpha() or element_name[0] == "_"):
+        element_name = "_" + element_name
+    return element_name
+
+
 def ann_to_xml(
     project_info: sly.ProjectInfo,
     image_info: sly.ImageInfo,
@@ -106,10 +115,11 @@ def ann_to_xml(
             ET.SubElement(xml_ann_obj, tag_name).text = tag_value
 
         for tag in label.tags:
+            element_name = xml_element_name(tag.name)
             if tag.value is None:
-                ET.SubElement(xml_ann_obj, tag.name).text = "1"
+                ET.SubElement(xml_ann_obj, element_name).text = "1"
                 continue
-            ET.SubElement(xml_ann_obj, tag.name).text = str(tag.value)
+            ET.SubElement(xml_ann_obj, element_name).text = str(tag.value)
 
         xml_ann_obj_bndbox = ET.SubElement(xml_ann_obj, "bndbox")
         ET.SubElement(xml_ann_obj_bndbox, "xmin").text = str(bitmap_to_bbox.left)

@@ -37,3 +37,23 @@ def test_any_shape_class(run_app):
     assert cls_mask[20, 20].tolist() == [255, 0, 0]
     main = os.path.join(voc, "ImageSets", "Main")
     assert read_lines(os.path.join(main, "thing_trainval.txt")) == ["img 1"]
+
+
+def test_multipolygon_is_exported(run_app):
+    """Old code: Multipolygon labels were skipped ("unsupported geometry type")."""
+    parcel = sly.ObjClass("parcel", sly.Multipolygon, color=[0, 255, 0])
+    meta = sly.ProjectMeta(obj_classes=[parcel])
+
+    def square(t, l, s):
+        return sly.Polygon([sly.PointLocation(r, c) for r, c in [(t, l), (t, l + s), (t + s, l + s), (t + s, l)]])
+
+    geometry = sly.Multipolygon([square(2, 2, 6), square(15, 20, 8)])
+    ann = sly.Annotation((H, W), [sly.Label(geometry, parcel)])
+    voc = run_app(meta, [ds_info(10, "ds")], {10: [("img.jpg", ann)]}, thickness=0)
+    assert bboxes(xml(voc, "img.xml")) == [("parcel", 2, 2, 28, 23)]
+    cls_mask = rgb(os.path.join(voc, "SegmentationClass", "img.png"))
+    assert cls_mask[4, 4].tolist() == [0, 255, 0]
+    assert cls_mask[18, 24].tolist() == [0, 255, 0]
+    assert cls_mask[12, 12].tolist() == [0, 0, 0]
+    main = os.path.join(voc, "ImageSets", "Main")
+    assert read_lines(os.path.join(main, "parcel_trainval.txt")) == ["img 1"]

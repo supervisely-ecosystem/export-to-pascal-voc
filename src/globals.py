@@ -50,7 +50,7 @@ VAL_TAG_NAME = "val"
 SPLIT_TAGS = {TRAIN_TAG_NAME, VAL_TAG_NAME}
 
 VALID_IMG_EXT = {".jpe", ".jpeg", ".jpg"}
-SUPPORTED_GEOMETRY_TYPES = {sly.Bitmap, sly.Polygon, sly.Rectangle}
+SUPPORTED_GEOMETRY_TYPES = {sly.Bitmap, sly.Polygon, sly.Rectangle, sly.Multipolygon}
 # Classes that can hold such labels (AlphaMask labels are exported as Bitmap).
 SUPPORTED_CLASS_TYPES = SUPPORTED_GEOMETRY_TYPES | {sly.AlphaMask, sly.AnyGeometry}
 

@@ -154,3 +154,20 @@ On this branch `config.json` uses `supervisely/export-to-pascal-voc:test-2ec8ffe
 `dev_requirements.txt`, and only if the tag is not on Docker Hub yet. Dev agents pull images "if not present", so
 every dependency change gets a new tag. **Before merging, set `docker_image` back to `supervisely/export-to-pascal-voc:6.74.10-1`**; `release.yml`
 builds that tag on the version release.
+
+## v2.4.1: SDK 6.74.52 (2026-10-28)
+
+The v2.4.0 release image failed the CVE gate in `release.yml`: pip-audit found "53 known vulnerabilities in 2
+packages" because SDK 6.74.10 pins pillow <= 12.2.0 and pydicom 2. v2.4.0 exists on GitHub only; the platform kept
+v2.3.1.
+
+- `supervisely==6.74.52` (pillow 13.0.0, pydicom 3), image `supervisely/export-to-pascal-voc:6.74.52`,
+  `instance_version` 6.18.3.
+- `release_branch.yml` builds the test image with `cve_checks: true`, the same gate as `release.yml`, so a branch
+  shows whether the version release will pass it. Branch run 40715342388: "No known vulnerabilities found" (90 Python
+  packages in the image).
+- Offline tests: 16 pass on Python 3.14 with SDK 6.74.52.
+- Dev, branch `sdk-6.74.52` (test image `test-2467cbad`), the six branch cases of the v2.4.0 check rerun and compared
+  with those runs (SDK 6.74.10): 62915 -> 63079, 62922 -> 63080, 62937 -> 63081, 62944 -> 63082, 62954 -> 63083,
+  62956 -> 63084. All finished. Every file is byte-identical except `SegmentationObject/*.png`, whose object colors are
+  random; all 39 such masks have the same object partition.

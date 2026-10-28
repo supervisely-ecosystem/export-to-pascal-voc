@@ -42,8 +42,6 @@ trainval_sets_segm_name = "Segmentation"
 train_txt_name = "train.txt"
 val_txt_name = "val.txt"
 
-is_trainval = None
-
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = ".png"
 

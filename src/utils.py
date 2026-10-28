@@ -145,7 +145,7 @@ def find_first_tag(img_tags: sly.TagCollection, split_tags: set) -> sly.Tag:
     return None
 
 
-def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
+def write_main_set(images_stats, meta_json, result_imgsets_dir):
     result_imgsets_main_subdir = os.path.join(result_imgsets_dir, g.trainval_sets_main_name)
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, g.trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_main_subdir)
@@ -167,12 +167,6 @@ def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
         {"suffix": "val", "imgs": val_imgs},
     ]
 
-    if is_trainval == 1:
-        trainval_imgs = [
-            i for i in images_stats if i["dataset"] == g.TRAIN_TAG_NAME + g.VAL_TAG_NAME
-        ]
-        write_objs[0] = {"suffix": "trainval", "imgs": trainval_imgs}
-
     for obj_cls in meta_json.obj_classes:
         if obj_cls.geometry_type not in g.SUPPORTED_GEOMETRY_TYPES:
             continue
@@ -188,19 +182,13 @@ def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
                     f.write(f'{img_stats["name"]} {v}\n')
 
 
-def write_segm_set(is_trainval, images_stats, result_imgsets_dir):
+def write_segm_set(images_stats, result_imgsets_dir):
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, g.trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_segm_subdir)
 
+    # trainval = train + val: every exported image is in one of them.
     with open(os.path.join(result_imgsets_segm_subdir, "trainval.txt"), "w") as f:
-        if is_trainval == 1:
-            f.writelines(
-                i["name"] + "\n"
-                for i in images_stats
-                if i["dataset"] == g.TRAIN_TAG_NAME + g.VAL_TAG_NAME
-            )
-        else:
-            f.writelines(i["name"] + "\n" for i in images_stats)
+        f.writelines(i["name"] + "\n" for i in images_stats)
     with open(os.path.join(result_imgsets_segm_subdir, "train.txt"), "w") as f:
         f.writelines(i["name"] + "\n" for i in images_stats if i["dataset"] == g.TRAIN_TAG_NAME)
     with open(os.path.join(result_imgsets_segm_subdir, "val.txt"), "w") as f:

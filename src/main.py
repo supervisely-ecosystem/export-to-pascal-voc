@@ -73,7 +73,9 @@ def from_sly_to_pascal(api: sly.Api):
     flat_titles_in_use = set()
     for dataset in datasets:
         sly.logger.info(f"Processing dataset: {dataset.name}")
-        is_trainval = int(dataset.name in ["trainval", "val", "train"])
+        # A dataset named "train" or "val" fixes the split of its images; any other
+        # dataset (including "trainval") goes to the ratio split below.
+        dataset_split = dataset.name if dataset.name in g.SPLIT_TAGS else None
 
         images = api.image.get_list(dataset.id)
         image_ids = [image_info.id for image_info in images]
@@ -142,7 +144,7 @@ def from_sly_to_pascal(api: sly.Api):
 
             cur_img_stats = {
                 "classes": set(),
-                "dataset": dataset.name if is_trainval == 1 else None,
+                "dataset": dataset_split,
                 "name": f"{ds_relpath}/{img_title}" if ds_relpath else img_title,
             }
             images_stats.append(cur_img_stats)
@@ -219,8 +221,8 @@ def from_sly_to_pascal(api: sly.Api):
     for img_stat in imgs_to_split[train_len:]:
         img_stat["dataset"] = g.VAL_TAG_NAME
 
-    utils.write_segm_set(is_trainval, images_stats, result_imgsets_dir)
-    utils.write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)
+    utils.write_segm_set(images_stats, result_imgsets_dir)
+    utils.write_main_set(images_stats, meta, result_imgsets_dir)
 
     file_info = sly.output.set_download(result_dir)
 

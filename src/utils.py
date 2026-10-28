@@ -191,9 +191,11 @@ def write_main_set(images_stats, meta_json, result_imgsets_dir):
         class_name = remove_non_printable(obj_cls.name)
         if class_name == "neutral":
             continue
+        file_class_name = class_name.replace("/", "_").replace("\\", "_")
         for o in write_objs:
             with open(
-                os.path.join(result_imgsets_main_subdir, f'{class_name}_{o["suffix"]}.txt'), "w"
+                os.path.join(result_imgsets_main_subdir, f'{file_class_name}_{o["suffix"]}.txt'),
+                "w",
             ) as f:
                 for img_stats in o["imgs"]:
                     v = "1" if class_name in img_stats["classes"] else "-1"

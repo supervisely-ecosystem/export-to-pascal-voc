@@ -66,6 +66,8 @@ jobs:
       # an existing tag already has this content, so the build is skipped
       skip_tag_check: false
       image_name: "${{ github.event.repository.name }}"
+      # same gate as release.yml, so a branch shows whether the version release will pass it
+      cve_checks: true
       # with the SDK pinned to a commit in dev_requirements.txt, name the runtime base tag explicitly:
       # tag_ref_name: "6.74.46"
 

@@ -1,2 +1,2 @@
-supervisely==6.74.10
+supervisely==6.74.52
 lxml==6.1.0

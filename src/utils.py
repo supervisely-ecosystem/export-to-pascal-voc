@@ -126,6 +126,18 @@ def ann_to_xml(
     tree.write(ann_path, pretty_print=True)
 
 
+def unique_title(title: str, titles_in_use: set) -> str:
+    """`title`, or `title_1`, `title_2`, ... if already used; records the result as used."""
+    new_title, i = title, 0
+    while new_title in titles_in_use:
+        i += 1
+        new_title = f"{title}_{i}"
+    if new_title != title:
+        sly.logger.warning(f"Image name {title!r} is already used in the export. New name: {new_title!r}")
+    titles_in_use.add(new_title)
+    return new_title
+
+
 def find_first_tag(img_tags: sly.TagCollection, split_tags: set) -> sly.Tag:
     for tag in split_tags:
         if img_tags.has_key(tag):

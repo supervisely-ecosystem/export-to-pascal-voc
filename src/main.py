@@ -70,9 +70,12 @@ def from_sly_to_pascal(api: sly.Api):
         return "/".join(reversed(parts))
 
     progress = sly.tqdm_sly(desc="Preparing images for export", total=total_images_cnt)
+    flat_titles_in_use = set()
     for dataset in datasets:
         sly.logger.info(f"Processing dataset: {dataset.name}")
-        is_trainval = int(dataset.name in ["trainval", "val", "train"])
+        # A dataset named "train" or "val" fixes the split of its images; any other
+        # dataset (including "trainval") goes to the ratio split below.
+        dataset_split = dataset.name if dataset.name in g.SPLIT_TAGS else None
 
         images = api.image.get_list(dataset.id)
         image_ids = [image_info.id for image_info in images]
@@ -95,33 +98,23 @@ def from_sly_to_pascal(api: sly.Api):
             ds_obj_dir = result_obj_dir
 
         if g.PRESERVE_NESTED_STRUCTURE:
-            # Names within a single dataset are unique, and each dataset has its own
-            # folder, so no prefixes or deduplication are needed.
-            image_paths = [
-                os.path.join(ds_images_dir, image_info.name) for image_info in images
-            ]
+            # Each dataset has its own folder: no prefixes, titles unique per folder.
+            out_names = [image_info.name for image_info in images]
+            titles_in_use = set()
         elif g.ADD_PREFIX_TO_IMAGES:
-            image_paths = [
-                os.path.join(result_images_dir, f"{dataset.id}_{image_info.name}")
-                for image_info in images
-            ]
+            out_names = [f"{dataset.id}_{image_info.name}" for image_info in images]
+            titles_in_use = flat_titles_in_use
         else:
-            image_paths = [
-                os.path.join(result_images_dir, image_info.name) for image_info in images
-            ]
-            for idx, path in enumerate(image_paths):
-                if os.path.exists(path):
-                    img_name = os.path.basename(path)
-                    name, ext = os.path.splitext(img_name)
-                    i = 1
-                    new_name = f"{name}_{i}{ext}"
-                    while os.path.exists(os.path.join(result_images_dir, new_name)):
-                        i += 1
-                        new_name = f"{name}_{i}{ext}"
-                    sly.logger.warning(
-                        f"Image {img_name} already exists in the directory. New name: {new_name}"
-                    )
-                    image_paths[idx] = os.path.join(result_images_dir, new_name)
+            out_names = [image_info.name for image_info in images]
+            titles_in_use = flat_titles_in_use
+        # Annotations, masks and the JPEG copy are all named by the title (name without
+        # extension), so titles must be unique in the output folder: a.jpg and a.png
+        # would otherwise overwrite each other.
+        image_paths = []
+        for out_name in out_names:
+            title, ext = os.path.splitext(out_name)
+            title = utils.unique_title(title, titles_in_use)
+            image_paths.append(os.path.join(ds_images_dir, title + ext))
 
         di_progress = sly.tqdm_sly(
             desc=f"Downloading images from {dataset.name}", total=len(images)
@@ -151,14 +144,14 @@ def from_sly_to_pascal(api: sly.Api):
 
             cur_img_stats = {
                 "classes": set(),
-                "dataset": dataset.name if is_trainval == 1 else None,
+                "dataset": dataset_split,
                 "name": f"{ds_relpath}/{img_title}" if ds_relpath else img_title,
             }
             images_stats.append(cur_img_stats)
 
-            if img_ext not in g.VALID_IMG_EXT:
-                jpg_image = f"{img_title}.jpg"
-                jpg_image_path = os.path.join(ds_images_dir, jpg_image)
+            if img_ext.lower() not in g.VALID_IMG_EXT:
+                cur_img_filename = f"{img_title}.jpg"
+                jpg_image_path = os.path.join(ds_images_dir, cur_img_filename)
 
                 im = sly.image.read(img_path)
                 sly.image.write(jpg_image_path, im)
@@ -171,6 +164,7 @@ def from_sly_to_pascal(api: sly.Api):
 
             valid_labels = []
             for label in ann.labels:
+                label = utils.alpha_mask_to_bitmap(label)
                 if type(label.geometry) in g.SUPPORTED_GEOMETRY_TYPES:
                     valid_labels.append(label)
                 else:
@@ -228,8 +222,8 @@ def from_sly_to_pascal(api: sly.Api):
     for img_stat in imgs_to_split[train_len:]:
         img_stat["dataset"] = g.VAL_TAG_NAME
 
-    utils.write_segm_set(is_trainval, images_stats, result_imgsets_dir)
-    utils.write_main_set(is_trainval, images_stats, meta, result_imgsets_dir)
+    utils.write_segm_set(images_stats, result_imgsets_dir)
+    utils.write_main_set(images_stats, meta, result_imgsets_dir)
 
     file_info = sly.output.set_download(result_dir)
 

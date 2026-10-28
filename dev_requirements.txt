@@ -1,4 +1,2 @@
-# supervisely==6.73.259
+supervisely==6.74.10
 lxml==6.1.0
-numpy>=1.19.4
-Pillow>=8.0.1

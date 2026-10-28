@@ -1,4 +1,5 @@
 import os
+import re
 from shutil import copyfile
 from typing import List
 
@@ -28,7 +29,7 @@ other_subclasses = {
 def from_ann_to_instance_mask(ann: sly.Annotation, mask_outpath, contour_thickness):
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
-        if label.obj_class.geometry_type == sly.Rectangle:
+        if isinstance(label.geometry, sly.Rectangle):  # boxes are XML-only
             continue
 
         if label.obj_class.name == "neutral":
@@ -48,7 +49,7 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     mask = np.zeros((ann.img_size[0], ann.img_size[1], 3), dtype=np.uint8)
     for label in ann.labels:
         class_name = remove_non_printable(label.obj_class.name)
-        if label.obj_class.geometry_type == sly.Rectangle:
+        if isinstance(label.geometry, sly.Rectangle):  # boxes are XML-only
             continue
 
         if class_name == "neutral":
@@ -63,6 +64,22 @@ def from_ann_to_class_mask(ann: sly.Annotation, mask_outpath, contour_thickness)
     im = Image.fromarray(mask)
     im = im.convert("P", palette=Image.ADAPTIVE)
     im.save(mask_outpath)
+
+
+def alpha_mask_to_bitmap(label: sly.Label) -> sly.Label:
+    """An AlphaMask label as a Bitmap of its pixels with alpha > 0; other labels unchanged."""
+    if not isinstance(label.geometry, sly.AlphaMask):
+        return label
+    bitmap = sly.Bitmap(label.geometry.data > 0, origin=label.geometry.origin)
+    return label.clone(geometry=bitmap, obj_class=label.obj_class.clone(geometry_type=sly.Bitmap))
+
+
+def xml_element_name(name: str) -> str:
+    """A valid XML element name for a tag name: "my tag" -> "my_tag", "1st" -> "_1st"."""
+    element_name = re.sub(r"[^\w.\-]", "_", name)
+    if not element_name or not (element_name[0].isalpha() or element_name[0] == "_"):
+        element_name = "_" + element_name
+    return element_name
 
 
 def ann_to_xml(
@@ -106,10 +123,11 @@ def ann_to_xml(
             ET.SubElement(xml_ann_obj, tag_name).text = tag_value
 
         for tag in label.tags:
+            element_name = xml_element_name(tag.name)
             if tag.value is None:
-                ET.SubElement(xml_ann_obj, tag.name).text = "1"
+                ET.SubElement(xml_ann_obj, element_name).text = "1"
                 continue
-            ET.SubElement(xml_ann_obj, tag.name).text = str(tag.value)
+            ET.SubElement(xml_ann_obj, element_name).text = str(tag.value)
 
         xml_ann_obj_bndbox = ET.SubElement(xml_ann_obj, "bndbox")
         ET.SubElement(xml_ann_obj_bndbox, "xmin").text = str(bitmap_to_bbox.left)
@@ -126,6 +144,18 @@ def ann_to_xml(
     tree.write(ann_path, pretty_print=True)
 
 
+def unique_title(title: str, titles_in_use: set) -> str:
+    """`title`, or `title_1`, `title_2`, ... if already used; records the result as used."""
+    new_title, i = title, 0
+    while new_title in titles_in_use:
+        i += 1
+        new_title = f"{title}_{i}"
+    if new_title != title:
+        sly.logger.warning(f"Image name {title!r} is already used in the export. New name: {new_title!r}")
+    titles_in_use.add(new_title)
+    return new_title
+
+
 def find_first_tag(img_tags: sly.TagCollection, split_tags: set) -> sly.Tag:
     for tag in split_tags:
         if img_tags.has_key(tag):
@@ -133,7 +163,7 @@ def find_first_tag(img_tags: sly.TagCollection, split_tags: set) -> sly.Tag:
     return None
 
 
-def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
+def write_main_set(images_stats, meta_json, result_imgsets_dir):
     result_imgsets_main_subdir = os.path.join(result_imgsets_dir, g.trainval_sets_main_name)
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, g.trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_main_subdir)
@@ -155,40 +185,30 @@ def write_main_set(is_trainval, images_stats, meta_json, result_imgsets_dir):
         {"suffix": "val", "imgs": val_imgs},
     ]
 
-    if is_trainval == 1:
-        trainval_imgs = [
-            i for i in images_stats if i["dataset"] == g.TRAIN_TAG_NAME + g.VAL_TAG_NAME
-        ]
-        write_objs[0] = {"suffix": "trainval", "imgs": trainval_imgs}
-
     for obj_cls in meta_json.obj_classes:
-        if obj_cls.geometry_type not in g.SUPPORTED_GEOMETRY_TYPES:
+        if obj_cls.geometry_type not in g.SUPPORTED_CLASS_TYPES:
             continue
         class_name = remove_non_printable(obj_cls.name)
         if class_name == "neutral":
             continue
+        file_class_name = class_name.replace("/", "_").replace("\\", "_")
         for o in write_objs:
             with open(
-                os.path.join(result_imgsets_main_subdir, f'{class_name}_{o["suffix"]}.txt'), "w"
+                os.path.join(result_imgsets_main_subdir, f'{file_class_name}_{o["suffix"]}.txt'),
+                "w",
             ) as f:
                 for img_stats in o["imgs"]:
                     v = "1" if class_name in img_stats["classes"] else "-1"
                     f.write(f'{img_stats["name"]} {v}\n')
 
 
-def write_segm_set(is_trainval, images_stats, result_imgsets_dir):
+def write_segm_set(images_stats, result_imgsets_dir):
     result_imgsets_segm_subdir = os.path.join(result_imgsets_dir, g.trainval_sets_segm_name)
     sly.fs.mkdir(result_imgsets_segm_subdir)
 
+    # trainval = train + val: every exported image is in one of them.
     with open(os.path.join(result_imgsets_segm_subdir, "trainval.txt"), "w") as f:
-        if is_trainval == 1:
-            f.writelines(
-                i["name"] + "\n"
-                for i in images_stats
-                if i["dataset"] == g.TRAIN_TAG_NAME + g.VAL_TAG_NAME
-            )
-        else:
-            f.writelines(i["name"] + "\n" for i in images_stats)
+        f.writelines(i["name"] + "\n" for i in images_stats)
     with open(os.path.join(result_imgsets_segm_subdir, "train.txt"), "w") as f:
         f.writelines(i["name"] + "\n" for i in images_stats if i["dataset"] == g.TRAIN_TAG_NAME)
     with open(os.path.join(result_imgsets_segm_subdir, "val.txt"), "w") as f:

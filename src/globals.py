@@ -42,8 +42,6 @@ trainval_sets_segm_name = "Segmentation"
 train_txt_name = "train.txt"
 val_txt_name = "val.txt"
 
-is_trainval = None
-
 pascal_contour_color = [224, 224, 192]
 pascal_ann_ext = ".png"
 
@@ -52,7 +50,9 @@ VAL_TAG_NAME = "val"
 SPLIT_TAGS = {TRAIN_TAG_NAME, VAL_TAG_NAME}
 
 VALID_IMG_EXT = {".jpe", ".jpeg", ".jpg"}
-SUPPORTED_GEOMETRY_TYPES = {sly.Bitmap, sly.Polygon, sly.Rectangle}
+SUPPORTED_GEOMETRY_TYPES = {sly.Bitmap, sly.Polygon, sly.Rectangle, sly.Multipolygon}
+# Classes that can hold such labels (AlphaMask labels are exported as Bitmap).
+SUPPORTED_CLASS_TYPES = SUPPORTED_GEOMETRY_TYPES | {sly.AlphaMask, sly.AnyGeometry}
 
 if TRAIN_VAL_SPLIT_COEF > 1 or TRAIN_VAL_SPLIT_COEF < 0:
     raise ValueError(
